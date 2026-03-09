@@ -1,0 +1,391 @@
+---
+title: Analytics Integration
+description: Set up Google Analytics with privacy-first cookie consent for Thalyson's Portfolio
+icon: 'chart-line'
+---
+
+## Overview
+
+This portfolio implements Google Analytics with a privacy-first approach, including GDPR-compliant cookie consent and IP anonymization. Analytics are only loaded after user consent is obtained.
+
+## Google Analytics Setup
+
+<Steps>
+  <Step title="Create Google Analytics Property">
+    1. Go to [Google Analytics](https://analytics.google.com/)
+    2. Create a new property for your portfolio
+    3. Set up a GA4 data stream
+    4. Copy your Measurement ID (format: `G-XXXXXXXXXX`)
+  </Step>
+
+  <Step title="Configure Environment Variable">
+    Add your Google Analytics ID to `.env.local`:
+    
+    ```bash
+    NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+    ```
+  </Step>
+
+  <Step title="Verify Integration">
+    The Google Analytics component is already integrated in the root layout. Deploy your site and verify tracking in the Google Analytics dashboard.
+  </Step>
+</Steps>
+
+## Implementation Details
+
+### Google Analytics Component
+
+The analytics implementation is located in `src/components/google-analytics.tsx`:
+
+<CodeGroup>
+```tsx src/components/google-analytics.tsx
+"use client";
+
+import Script from "next/script";
+import { useEffect, useState } from "react";
+
+const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID;
+
+export function GoogleAnalytics() {
+  const [consentGiven, setConsentGiven] = useState(false);
+
+  useEffect(() => {
+    const consent = localStorage.getItem("cookieConsent");
+    requestAnimationFrame(() => setConsentGiven(consent === "accepted"));
+
+    // Listen for changes in localStorage (when user accepts)
+    const handleStorage = () => {
+      const updated = localStorage.getItem("cookieConsent");
+      setConsentGiven(updated === "accepted");
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("cookieConsentUpdate", handleStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("cookieConsentUpdate", handleStorage);
+    };
+  }, []);
+
+  if (!consentGiven || !GA_TRACKING_ID) return null;
+
+  return (
+    <>
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
+        strategy="afterInteractive"
+      />
+      <Script id="google-analytics" strategy="lazyOnload">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${GA_TRACKING_ID}', {
+            anonymize_ip: true
+          });
+        `}
+      </Script>
+    </>
+  );
+}
+```
+</CodeGroup>
+
+### Key Features
+
+- **Consent-Based Loading**: Scripts only load after user consent
+- **IP Anonymization**: `anonymize_ip: true` for GDPR compliance
+- **Optimized Loading**: Uses `afterInteractive` and `lazyOnload` strategies
+- **Event-Driven**: Responds to consent changes in real-time
+- **No Tracking ID Fallback**: Safely handles missing environment variables
+
+<Note>
+The component uses Next.js `Script` component with optimized loading strategies to minimize performance impact.
+</Note>
+
+## Cookie Consent Integration
+
+### Cookie Consent Component
+
+The cookie consent banner is implemented in `src/components/cookie-consent.tsx`:
+
+<Note>
+The code below includes a link to `/privacy-policy`, which is a page in the portfolio application. You can customize this link to point to your own privacy policy page.
+</Note>
+
+<CodeGroup>
+```tsx src/components/cookie-consent.tsx
+"use client";
+
+import { useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import Link from "next/link";
+import { Card, CardContent, CardFooter } from "./ui/card";
+import content from "@/utils/content.json";
+import { useLanguageStore } from "@/store/language-store";
+
+export function CookieConsent() {
+  const { lang } = useLanguageStore();
+  const [showWarning, setShowWarning] = useState<boolean>(false);
+
+  useEffect(() => {
+    const consent = localStorage.getItem("cookieConsent");
+    if (!consent) {
+      requestAnimationFrame(() => setShowWarning(true));
+    }
+    const open = () => setShowWarning(true);
+    window.addEventListener("openCookieConsent", open);
+    return () => {
+      window.removeEventListener("openCookieConsent", open);
+    };
+  }, []);
+
+  const handleConsent = (accepted: boolean) => {
+    localStorage.setItem("cookieConsent", accepted ? "accepted" : "declined");
+    setShowWarning(false);
+
+    // Trigger event for GoogleAnalytics to load
+    window.dispatchEvent(new Event("cookieConsentUpdate"));
+  };
+
+  if (!showWarning) return null;
+  return (
+    <Card className="fixed bottom-2 left-2 max-w-sm z-50">
+      <CardContent>
+        <p className="text-muted-foreground">
+          {content.cookieConsent.message[lang]}
+        </p>
+      </CardContent>
+      <CardFooter className="flex items-center">
+        <Button variant="link" size="sm" className="mr-auto text-xs">
+          <Link href="/privacy-policy">
+            {content.cookieConsent.privacy[lang]}
+          </Link>
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => handleConsent(false)}
+        >
+          {content.cookieConsent.decline[lang]}
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => handleConsent(true)}
+        >
+          {content.cookieConsent.accept[lang]}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+```
+</CodeGroup>
+
+### Consent Flow
+
+1. **Initial Load**: Check if user has previously provided consent
+2. **Show Banner**: Display cookie consent if no preference exists
+3. **User Action**: User accepts or declines cookies
+4. **Store Preference**: Save choice to `localStorage`
+5. **Trigger Event**: Dispatch `cookieConsentUpdate` event
+6. **Load Analytics**: Google Analytics loads if consent is accepted
+
+<Tip>
+The consent banner supports multilingual content through the language store, providing a localized experience.
+</Tip>
+
+## GDPR Compliance
+
+The implementation follows GDPR requirements:
+
+### Privacy-First Features
+
+- **Opt-In Only**: Analytics only load after explicit consent
+- **IP Anonymization**: User IP addresses are anonymized
+- **Clear Communication**: Privacy policy link in consent banner
+- **Easy Opt-Out**: Users can decline cookies
+- **Persistent Preference**: Consent choice is remembered
+- **Reopenable**: Users can change their preference via custom event
+
+### Privacy Policy
+
+Ensure your privacy policy (located at `/privacy-policy`) includes:
+
+- What data is collected
+- How data is used
+- Third-party services (Google Analytics)
+- User rights (access, deletion, opt-out)
+- Cookie information
+- Contact information
+
+<Warning>
+Always keep your privacy policy up to date and compliant with local regulations (GDPR, CCPA, etc.).
+</Warning>
+
+## Custom Event Tracking
+
+You can track custom events after the user has given consent.
+
+### Track Custom Events
+
+<CodeGroup>
+```typescript Custom Event Tracking
+// Check if analytics is loaded
+if (typeof window !== 'undefined' && window.gtag) {
+  window.gtag('event', 'event_name', {
+    event_category: 'category',
+    event_label: 'label',
+    value: 'value'
+  });
+}
+```
+
+```typescript Page View Tracking
+// Track page views in client components
+import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+
+export function usePageTracking() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'page_view', {
+        page_path: pathname
+      });
+    }
+  }, [pathname]);
+}
+```
+
+```typescript Button Click Tracking
+// Track button clicks
+const handleButtonClick = () => {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', 'button_click', {
+      event_category: 'engagement',
+      event_label: 'contact_button'
+    });
+  }
+  // Your button logic
+};
+```
+</CodeGroup>
+
+### TypeScript Declaration
+
+Add type definitions for gtag in a global declaration file:
+
+```typescript global.d.ts
+interface Window {
+  gtag?: (
+    command: string,
+    targetId: string,
+    config?: Record<string, any>
+  ) => void;
+  dataLayer?: any[];
+}
+```
+
+## Analytics Best Practices
+
+### Performance Optimization
+
+- **Lazy Loading**: Analytics script uses `lazyOnload` strategy
+- **Consent-Based**: No unnecessary script loading for users who decline
+- **Minimal Impact**: Next.js Script component optimizes loading
+
+### Privacy Best Practices
+
+- **Transparency**: Clear messaging about cookie usage
+- **User Control**: Easy opt-in and opt-out mechanisms
+- **Data Minimization**: Only collect necessary analytics data
+- **IP Anonymization**: Enabled by default
+
+### Data Collection Guidelines
+
+<Note>
+**Collect Only What You Need**
+
+For a portfolio site, focus on:
+- Page views and navigation patterns
+- Popular projects or sections
+- Traffic sources
+- Geographic distribution (anonymized)
+
+Avoid collecting personally identifiable information (PII).
+</Note>
+
+## Testing Analytics
+
+### Local Testing
+
+<Steps>
+  <Step title="Enable Analytics">
+    Add your GA_ID to `.env.local` and restart the dev server.
+  </Step>
+
+  <Step title="Accept Cookies">
+    Visit your local site and accept the cookie consent banner.
+  </Step>
+
+  <Step title="Check Real-Time Reports">
+    Open Google Analytics and navigate to **Reports > Real-time** to see your session.
+  </Step>
+
+  <Step title="Test Custom Events">
+    Trigger custom events and verify they appear in the Real-time report.
+  </Step>
+</Steps>
+
+### Production Testing
+
+1. Deploy your site with analytics enabled
+2. Visit your production URL
+3. Accept cookies
+4. Verify tracking in Google Analytics Real-time reports
+5. Test from different devices and browsers
+
+<Tip>
+Use Google Analytics DebugView for detailed event debugging during development.
+</Tip>
+
+## Reopening Cookie Consent
+
+Users can reopen the cookie consent banner programmatically:
+
+```typescript
+// Dispatch custom event to reopen consent banner
+window.dispatchEvent(new Event('openCookieConsent'));
+```
+
+This is useful for a "Cookie Settings" link in your footer or privacy policy page.
+
+## Troubleshooting
+
+### Analytics Not Loading
+
+1. Verify `NEXT_PUBLIC_GA_ID` is set correctly
+2. Check that cookies have been accepted
+3. Open browser console and look for errors
+4. Verify network requests to `googletagmanager.com`
+
+### Events Not Tracking
+
+1. Ensure `window.gtag` exists before calling
+2. Check Google Analytics Real-time reports
+3. Verify event names and parameters
+4. Use DebugView for detailed event inspection
+
+### Cookie Consent Not Showing
+
+1. Check localStorage for existing `cookieConsent` value
+2. Clear localStorage and refresh
+3. Verify the component is included in the layout
+
+<Warning>
+Never include your Google Analytics ID directly in code. Always use environment variables to keep configuration separate and secure.
+</Warning>

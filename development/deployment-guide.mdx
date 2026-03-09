@@ -1,0 +1,824 @@
+---
+title: 'Deployment Guide'
+description: 'Complete guide to deploying Thalyson''s Portfolio to production environments'
+---
+
+## Deployment Options Overview
+
+Thalyson's Portfolio is a Next.js application that can be deployed to various platforms. This guide covers multiple deployment strategies, from the recommended Vercel deployment to self-hosted options.
+
+<Tip>
+  **Recommended**: Deploy to Vercel for the best Next.js experience with zero configuration, automatic HTTPS, and global CDN.
+</Tip>
+
+### Platform Comparison
+
+| Platform | Best For | Difficulty | Next.js Support |
+|----------|----------|------------|-----------------|
+| Vercel | Production apps | Easy | Excellent |
+| Netlify | Static sites | Easy | Good |
+| AWS Amplify | AWS ecosystem | Medium | Good |
+| Docker | Self-hosted | Advanced | Excellent |
+| VPS/Cloud | Full control | Advanced | Excellent |
+
+## Vercel Deployment (Recommended)
+
+Vercel is the company behind Next.js and provides the best deployment experience with zero configuration.
+
+### Prerequisites
+
+- GitHub/GitLab/Bitbucket account with your repository
+- Vercel account (free tier available)
+- Project built successfully locally (`npm run build`)
+
+### Step-by-Step Vercel Deployment
+
+<Steps>
+  <Step title="Create Vercel Account">
+    Visit [vercel.com](https://vercel.com) and sign up with your GitHub, GitLab, or Bitbucket account.
+  </Step>
+  
+  <Step title="Import Repository">
+    1. Click **"Add New Project"**
+    2. Select **"Import Git Repository"**
+    3. Choose your portfolio repository
+    4. Grant Vercel access if prompted
+    
+    <Note>
+      Vercel automatically detects Next.js projects and configures build settings.
+    </Note>
+  </Step>
+  
+  <Step title="Configure Project Settings">
+    Vercel auto-detects the following from `package.json:5-11`:
+    
+    - **Framework Preset**: Next.js
+    - **Build Command**: `npm run build`
+    - **Output Directory**: `.next` (automatic)
+    - **Install Command**: `npm install`
+    - **Development Command**: `npm run dev`
+    
+    You typically don't need to change these settings.
+  </Step>
+  
+  <Step title="Configure Environment Variables">
+    If your project uses environment variables, add them in the Vercel dashboard:
+    
+    1. Go to **Project Settings → Environment Variables**
+    2. Add each variable:
+       - Key: `NEXT_PUBLIC_API_URL`
+       - Value: `https://api.example.com`
+       - Environment: Production, Preview, Development
+    
+    <Warning>
+      Remember: Only variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Server-side variables should not have this prefix.
+    </Warning>
+  </Step>
+  
+  <Step title="Deploy">
+    Click **"Deploy"** and wait for the build to complete (usually 1-3 minutes).
+    
+    Vercel will:
+    - Install dependencies
+    - Run `npm run build`
+    - Deploy to global CDN
+    - Generate a unique preview URL
+  </Step>
+  
+  <Step title="Verify Deployment">
+    Once deployed, Vercel provides:
+    - **Production URL**: `your-project.vercel.app`
+    - **Deployment logs**: Full build and runtime logs
+    - **Performance insights**: Core Web Vitals
+    - **Preview deployments**: For every branch/PR
+  </Step>
+</Steps>
+
+### Environment Variables Configuration
+
+<CodeGroup>
+```bash Client-Side Variables
+# Available in browser (prefix with NEXT_PUBLIC_)
+NEXT_PUBLIC_API_URL=https://api.example.com
+NEXT_PUBLIC_SITE_URL=https://thalyson.dev
+NEXT_PUBLIC_ANALYTICS_ID=UA-XXXXXXXXX
+```
+
+```bash Server-Side Variables
+# Only available in server components and API routes
+DATABASE_URL=postgresql://...
+API_SECRET_KEY=your-secret-key
+EMAIL_SERVER_PASSWORD=your-password
+```
+
+```bash Vercel System Variables
+# Automatically available in Vercel deployments
+VERCEL_URL=your-project.vercel.app
+VERCEL_ENV=production
+VERCEL_GIT_COMMIT_SHA=abc123...
+```
+</CodeGroup>
+
+<Accordion title="How to Add Environment Variables in Vercel">
+  <Steps>
+    <Step title="Navigate to Settings">
+      Go to your project dashboard → **Settings → Environment Variables**
+    </Step>
+    
+    <Step title="Add Variables">
+      - Enter variable name (e.g., `NEXT_PUBLIC_API_URL`)
+      - Enter value
+      - Select environments: Production, Preview, Development
+    </Step>
+    
+    <Step title="Redeploy">
+      After adding variables, trigger a new deployment:
+      ```bash
+      git commit --allow-empty -m "Trigger deployment"
+      git push
+      ```
+      Or click **"Redeploy"** in the Vercel dashboard.
+    </Step>
+  </Steps>
+</Accordion>
+
+### Custom Domain Setup
+
+<Steps>
+  <Step title="Add Domain in Vercel">
+    1. Go to **Project Settings → Domains**
+    2. Enter your domain (e.g., `thalyson.dev`)
+    3. Click **"Add"**
+  </Step>
+  
+  <Step title="Configure DNS Records">
+    Add these records to your domain registrar:
+    
+    **For apex domain** (`thalyson.dev`):
+    ```
+    Type: A
+    Name: @
+    Value: 76.76.21.21
+    ```
+    
+    **For www subdomain** (`www.thalyson.dev`):
+    ```
+    Type: CNAME
+    Name: www
+    Value: cname.vercel-dns.com
+    ```
+  </Step>
+  
+  <Step title="Wait for DNS Propagation">
+    DNS changes can take 24-48 hours to propagate. Vercel automatically provisions SSL certificates once DNS is configured.
+  </Step>
+  
+  <Step title="Verify HTTPS">
+    Once configured, your site is automatically available via HTTPS with auto-renewing certificates.
+  </Step>
+</Steps>
+
+<Note>
+  Vercel automatically redirects HTTP to HTTPS and handles SSL certificate renewal.
+</Note>
+
+### Preview Deployments
+
+Vercel creates automatic preview deployments for:
+
+- **Every commit**: Pushed to any branch
+- **Every pull request**: With unique URL
+- **Every branch**: Continuous deployment
+
+<Tip>
+  Preview deployments are perfect for:
+  - Testing changes before merging
+  - Sharing work with team/clients
+  - Running end-to-end tests
+  - QA and review processes
+</Tip>
+
+**Preview URL format**: `your-project-git-branch-name.vercel.app`
+
+## Alternative Deployment Platforms
+
+### Netlify Deployment
+
+Netlify is another popular platform for deploying Next.js applications.
+
+<Steps>
+  <Step title="Install Netlify CLI">
+    ```bash
+    npm install -g netlify-cli
+    ```
+  </Step>
+  
+  <Step title="Configure Build Settings">
+    Create `netlify.toml` in your project root:
+    
+    ```toml
+    [build]
+      command = "npm run build"
+      publish = ".next"
+    
+    [[plugins]]
+      package = "@netlify/plugin-nextjs"
+    ```
+  </Step>
+  
+  <Step title="Deploy">
+    ```bash
+    netlify login
+    netlify init
+    netlify deploy --prod
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  Netlify's Next.js support is good but not as comprehensive as Vercel. Some Next.js features may require additional configuration.
+</Warning>
+
+### AWS Amplify Deployment
+
+Deploy to AWS Amplify for integration with AWS services.
+
+<Steps>
+  <Step title="Install Amplify CLI">
+    ```bash
+    npm install -g @aws-amplify/cli
+    amplify configure
+    ```
+  </Step>
+  
+  <Step title="Initialize Amplify">
+    ```bash
+    amplify init
+    amplify add hosting
+    ```
+  </Step>
+  
+  <Step title="Configure Build Settings">
+    Create `amplify.yml`:
+    
+    ```yaml
+    version: 1
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+    ```
+  </Step>
+  
+  <Step title="Deploy">
+    ```bash
+    amplify push
+    amplify publish
+    ```
+  </Step>
+</Steps>
+
+### Docker Deployment
+
+For containerized deployments, use Docker with the official Next.js example.
+
+<Steps>
+  <Step title="Create Dockerfile">
+    Create `Dockerfile` in project root:
+    
+    ```dockerfile
+    FROM node:20-alpine AS base
+    
+    # Install dependencies only when needed
+    FROM base AS deps
+    RUN apk add --no-cache libc6-compat
+    WORKDIR /app
+    
+    COPY package*.json ./
+    RUN npm ci
+    
+    # Rebuild the source code only when needed
+    FROM base AS builder
+    WORKDIR /app
+    COPY --from=deps /app/node_modules ./node_modules
+    COPY . .
+    
+    # Set environment variables for build
+    ENV NEXT_TELEMETRY_DISABLED 1
+    
+    RUN npm run build
+    
+    # Production image, copy all the files and run next
+    FROM base AS runner
+    WORKDIR /app
+    
+    ENV NODE_ENV production
+    ENV NEXT_TELEMETRY_DISABLED 1
+    
+    RUN addgroup --system --gid 1001 nodejs
+    RUN adduser --system --uid 1001 nextjs
+    
+    COPY --from=builder /app/public ./public
+    
+    # Automatically leverage output traces to reduce image size
+    COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+    COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+    
+    USER nextjs
+    
+    EXPOSE 3000
+    
+    ENV PORT 3000
+    
+    CMD ["node", "server.js"]
+    ```
+  </Step>
+  
+  <Step title="Update next.config.ts">
+    Enable standalone output mode in `next.config.ts`:
+    
+    ```typescript
+    const nextConfig = {
+      output: 'standalone',
+      // ... rest of your config
+    }
+    ```
+  </Step>
+  
+  <Step title="Build and Run">
+    ```bash
+    # Build Docker image
+    docker build -t thalyson-portfolio .
+    
+    # Run container
+    docker run -p 3000:3000 thalyson-portfolio
+    ```
+  </Step>
+  
+  <Step title="Docker Compose (Optional)">
+    Create `docker-compose.yml`:
+    
+    ```yaml
+    version: '3.8'
+    services:
+      web:
+        build: .
+        ports:
+          - "3000:3000"
+        environment:
+          - NODE_ENV=production
+        restart: unless-stopped
+    ```
+    
+    Run with:
+    ```bash
+    docker-compose up -d
+    ```
+  </Step>
+</Steps>
+
+### Self-Hosted (VPS/Cloud) Deployment
+
+Deploy to your own server with PM2 or systemd.
+
+<Steps>
+  <Step title="Prepare Server">
+    Install Node.js 20+ on your server:
+    ```bash
+    # Ubuntu/Debian
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    ```
+  </Step>
+  
+  <Step title="Clone and Build">
+    ```bash
+    git clone https://github.com/yourusername/portfolio.git
+    cd portfolio
+    npm install
+    npm run build
+    ```
+  </Step>
+  
+  <Step title="Install PM2">
+    ```bash
+    npm install -g pm2
+    ```
+  </Step>
+  
+  <Step title="Create PM2 Ecosystem File">
+    Create `ecosystem.config.js`:
+    
+    ```javascript
+    module.exports = {
+      apps: [{
+        name: 'thalyson-portfolio',
+        script: 'npm',
+        args: 'start',
+        cwd: '/path/to/portfolio',
+        instances: 'max',
+        exec_mode: 'cluster',
+        env: {
+          NODE_ENV: 'production',
+          PORT: 3000
+        }
+      }]
+    }
+    ```
+  </Step>
+  
+  <Step title="Start with PM2">
+    ```bash
+    pm2 start ecosystem.config.js
+    pm2 save
+    pm2 startup
+    ```
+  </Step>
+  
+  <Step title="Configure Nginx Reverse Proxy">
+    Create `/etc/nginx/sites-available/portfolio`:
+    
+    ```nginx
+    server {
+        listen 80;
+        server_name thalyson.dev www.thalyson.dev;
+        
+        location / {
+            proxy_pass http://localhost:3000;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+    }
+    ```
+    
+    Enable and restart:
+    ```bash
+    sudo ln -s /etc/nginx/sites-available/portfolio /etc/nginx/sites-enabled/
+    sudo nginx -t
+    sudo systemctl restart nginx
+    ```
+  </Step>
+  
+  <Step title="Setup SSL with Let's Encrypt">
+    ```bash
+    sudo apt-get install certbot python3-certbot-nginx
+    sudo certbot --nginx -d thalyson.dev -d www.thalyson.dev
+    ```
+  </Step>
+</Steps>
+
+## Environment Variables for Production
+
+### Required Variables
+
+Depending on your features, you may need:
+
+<CodeGroup>
+```bash API Configuration
+NEXT_PUBLIC_API_URL=https://api.thalyson.dev
+API_SECRET_KEY=your-secret-key
+```
+
+```bash Analytics
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_ANALYTICS_ID=UA-XXXXXXXXX
+```
+
+```bash Image Optimization
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
+# Configured in next.config.ts:9-16
+```
+
+```bash Email/Contact Form
+EMAIL_SERVER_HOST=smtp.example.com
+EMAIL_SERVER_PORT=587
+EMAIL_SERVER_USER=your-email@example.com
+EMAIL_SERVER_PASSWORD=your-password
+EMAIL_FROM=noreply@thalyson.dev
+```
+</CodeGroup>
+
+<Warning>
+  **Security Best Practices**:
+  - Never commit `.env` files to Git
+  - Use different values for development and production
+  - Rotate secrets regularly
+  - Use platform-specific secret management when possible
+</Warning>
+
+## Performance Monitoring
+
+### Vercel Analytics
+
+Vercel provides built-in analytics:
+
+```bash
+npm install @vercel/analytics
+```
+
+```tsx
+// app/layout.tsx
+import { Analytics } from '@vercel/analytics/react'
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Analytics />
+      </body>
+    </html>
+  )
+}
+```
+
+### Core Web Vitals Monitoring
+
+<Accordion title="Monitor Performance Metrics">
+  Track Core Web Vitals in production:
+  
+  ```tsx
+  // app/layout.tsx
+  import { SpeedInsights } from '@vercel/speed-insights/next'
+  
+  export default function RootLayout({ children }) {
+    return (
+      <html>
+        <body>
+          {children}
+          <SpeedInsights />
+        </body>
+      </html>
+    )
+  }
+  ```
+  
+  This tracks:
+  - **LCP** (Largest Contentful Paint)
+  - **FID** (First Input Delay)
+  - **CLS** (Cumulative Layout Shift)
+  - **FCP** (First Contentful Paint)
+  - **TTFB** (Time to First Byte)
+</Accordion>
+
+### Third-Party Monitoring
+
+<CodeGroup>
+```typescript Sentry Error Tracking
+// Install Sentry
+npm install @sentry/nextjs
+
+// Initialize in app/layout.tsx
+import * as Sentry from '@sentry/nextjs'
+
+Sentry.init({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: process.env.VERCEL_ENV || 'development',
+  tracesSampleRate: 1.0,
+})
+```
+
+```typescript LogRocket Session Replay
+// Install LogRocket
+npm install logrocket
+
+// Initialize
+import LogRocket from 'logrocket'
+
+if (typeof window !== 'undefined') {
+  LogRocket.init('your-app-id')
+}
+```
+</CodeGroup>
+
+## Post-Deployment Checklist
+
+After deploying, verify everything works:
+
+<Steps>
+  <Step title="Functional Testing">
+    - [ ] All pages load correctly
+    - [ ] Navigation works across all routes
+    - [ ] Forms submit successfully
+    - [ ] Images load and are optimized
+    - [ ] Links work (internal and external)
+    - [ ] Contact form sends emails
+  </Step>
+  
+  <Step title="Performance Testing">
+    - [ ] Run Lighthouse audit (target: 90+ scores)
+    - [ ] Check Core Web Vitals
+    - [ ] Verify image optimization (WebP/AVIF served)
+    - [ ] Test mobile performance
+    - [ ] Check First Contentful Paint < 1.8s
+    - [ ] Verify Time to Interactive < 3.8s
+  </Step>
+  
+  <Step title="SEO Verification">
+    - [ ] Meta tags are correct
+    - [ ] Open Graph images display
+    - [ ] Sitemap is accessible (`/sitemap.xml`)
+    - [ ] Robots.txt is configured
+    - [ ] Structured data is valid
+    - [ ] Social media cards render correctly
+  </Step>
+  
+  <Step title="Security Checks">
+    - [ ] HTTPS is enforced
+    - [ ] Security headers are set
+    - [ ] No sensitive data exposed
+    - [ ] API keys are in environment variables
+    - [ ] CORS is properly configured
+    - [ ] Rate limiting is in place
+  </Step>
+  
+  <Step title="Monitoring Setup">
+    - [ ] Analytics tracking works
+    - [ ] Error tracking is configured
+    - [ ] Performance monitoring active
+    - [ ] Uptime monitoring enabled
+    - [ ] Alert notifications configured
+  </Step>
+</Steps>
+
+## Continuous Deployment Setup
+
+### Automated Deployments
+
+With Vercel, deployments are automatic:
+
+1. **Push to Git**: Every push triggers a build
+2. **Pull Requests**: Get preview deployments
+3. **Main Branch**: Automatically deploys to production
+
+### GitHub Actions (Alternative CI/CD)
+
+<Accordion title="Custom GitHub Actions Workflow">
+  Create `.github/workflows/deploy.yml`:
+  
+  ```yaml
+  name: Deploy to Production
+  
+  on:
+    push:
+      branches: [main]
+  
+  jobs:
+    deploy:
+      runs-on: ubuntu-latest
+      
+      steps:
+        - uses: actions/checkout@v3
+        
+        - name: Setup Node.js
+          uses: actions/setup-node@v3
+          with:
+            node-version: '20'
+            cache: 'npm'
+        
+        - name: Install dependencies
+          run: npm ci
+        
+        - name: Run linter
+          run: npm run lint
+        
+        - name: Build project
+          run: npm run build
+          env:
+            NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        
+        - name: Deploy to Vercel
+          uses: amondnet/vercel-action@v25
+          with:
+            vercel-token: ${{ secrets.VERCEL_TOKEN }}
+            vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+            vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+            vercel-args: '--prod'
+  ```
+</Accordion>
+
+## Rollback Procedures
+
+### Vercel Rollback
+
+<Steps>
+  <Step title="Access Deployments">
+    Go to your project dashboard → **Deployments**
+  </Step>
+  
+  <Step title="Find Previous Deployment">
+    Locate the last known good deployment
+  </Step>
+  
+  <Step title="Promote to Production">
+    Click the three dots → **Promote to Production**
+  </Step>
+</Steps>
+
+<Note>
+  Rollbacks are instant on Vercel. Your site reverts to the selected deployment immediately.
+</Note>
+
+### Manual Rollback
+
+For self-hosted deployments:
+
+```bash
+# Git-based rollback
+git revert <commit-hash>
+git push origin main
+
+# Or reset to previous commit
+git reset --hard <previous-commit>
+git push -f origin main
+
+# Then rebuild and deploy
+npm run build
+pm2 restart thalyson-portfolio
+```
+
+<Warning>
+  Always test rollbacks in a staging environment first. Keep detailed deployment logs for troubleshooting.
+</Warning>
+
+## Troubleshooting Common Deployment Issues
+
+<Accordion title="Build Fails in Production but Works Locally">
+  **Possible causes**:
+  - Environment variables not set
+  - Different Node.js versions
+  - Missing dependencies
+  
+  **Solutions**:
+  ```bash
+  # Match production Node version locally
+  nvm install 20
+  nvm use 20
+  
+  # Clear cache and rebuild
+  rm -rf .next node_modules
+  npm install
+  npm run build
+  ```
+</Accordion>
+
+<Accordion title="Images Not Loading">
+  **Cause**: Remote image domains not configured
+  
+  **Solution**: Verify `next.config.ts:9-16` includes all image domains:
+  ```typescript
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com"
+      },
+      // Add other domains here
+    ]
+  }
+  ```
+</Accordion>
+
+<Accordion title="API Routes Return 404">
+  **Cause**: Routes not properly configured
+  
+  **Solution**: Ensure API routes are in `app/api/` directory and properly exported
+</Accordion>
+
+<Accordion title="Environment Variables Undefined">
+  **Cause**: Variables not set in deployment platform
+  
+  **Solution**: 
+  1. Add variables in platform dashboard
+  2. Redeploy after adding variables
+  3. Verify variable names match exactly (case-sensitive)
+</Accordion>
+
+## Next Steps
+
+After successful deployment:
+
+1. **Monitor Performance**: Set up analytics and error tracking
+2. **SEO Optimization**: Submit sitemap to Google Search Console
+3. **Social Media**: Test Open Graph cards on social platforms
+4. **CDN**: Verify global CDN distribution
+5. **Backups**: Set up automated backups if self-hosted
+6. **Documentation**: Keep deployment docs updated
+
+<Tip>
+  Join the [Vercel Discord](https://vercel.com/discord) or [Next.js GitHub Discussions](https://github.com/vercel/next.js/discussions) for community support.
+</Tip>

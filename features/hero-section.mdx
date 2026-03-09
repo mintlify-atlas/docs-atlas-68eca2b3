@@ -1,0 +1,248 @@
+---
+title: 'Hero Section'
+description: 'Learn how the Hero component creates an impactful first impression with animations, CTAs, and GitHub stats'
+icon: 'home'
+---
+
+## Overview
+
+The Hero component is the landing section of Thalyson's portfolio. It combines engaging animations, clear call-to-action buttons, social links, and real-time GitHub statistics to create a powerful first impression.
+
+## Component Location
+
+```
+src/components/hero.tsx
+```
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Animated Intro" icon="sparkles">
+    Framer Motion stagger animations for progressive content reveal
+  </Card>
+  <Card title="Action Buttons" icon="hand-pointer">
+    Portfolio navigation, WhatsApp contact, and resume download
+  </Card>
+  <Card title="Social Links" icon="share-nodes">
+    Direct links to GitHub and LinkedIn profiles
+  </Card>
+  <Card title="GitHub Stats" icon="github">
+    Live statistics powered by GitHub API integration
+  </Card>
+</CardGroup>
+
+## Component Structure
+
+### Animation Configuration
+
+The Hero uses sophisticated animation configs powered by Framer Motion:
+
+```typescript
+const ANIMATION_CONFIG = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1
+      }
+    }
+  },
+  item: {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 20,
+        stiffness: 100,
+        duration: 0.8
+      }
+    }
+  },
+  title: {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: "spring",
+        damping: 15,
+        stiffness: 100,
+        duration: 1
+      }
+    }
+  }
+} as const;
+```
+
+<Note>
+The staggerChildren creates a cascading effect where each child element animates sequentially with a 0.2s delay.
+</Note>
+
+## Content Configuration
+
+All Hero content is sourced from `content.json` with bilingual support:
+
+```json
+"hero": {
+  "role": {
+    "ptBR": "Full-stack Developer • Product Builder",
+    "en": "Full-stack Developer • Product Builder"
+  },
+  "hello": { "ptBR": "Olá, eu sou", "en": "Hi, I'm" },
+  "name": "Thalyson Rafael",
+  "tagline": {
+    "ptBR": "Transformo visão técnica em produtos escaláveis e experiências de alto impacto.",
+    "en": "I turn technical vision into scalable products and high-impact experiences."
+  },
+  "description": {
+    "ptBR": "Focado em arquitetura monorepo, performance e decisões orientadas a dados para SaaS moderno.",
+    "en": "Focused on monorepo architecture, performance, and data-informed decisions for modern SaaS."
+  }
+}
+```
+
+## Action Buttons
+
+The Hero includes three primary CTAs configured through the `getActionButton` function:
+
+<Steps>
+  <Step title="View Portfolio">
+    Scrolls smoothly to the projects section using `scrollToSection` callback
+    
+    ```typescript
+    {
+      id: "projects",
+      label: content.hero.actions.portfolio.label[lang],
+      icon: Eye,
+      targetId: "projetos",
+      variant: "default"
+    }
+    ```
+  </Step>
+  
+  <Step title="WhatsApp Contact">
+    Opens WhatsApp web with pre-filled message
+    
+    ```typescript
+    {
+      id: "whatsapp",
+      label: content.hero.actions.whatsapp.label[lang],
+      icon: FaWhatsapp,
+      href: "https://wa.me/5565981278291?text=Ol%C3%A1!%20Vi%20seu%20portf%C3%B3lio%20e%20quero%20conversar.",
+      variant: "outline"
+    }
+    ```
+  </Step>
+  
+  <Step title="Download Resume">
+    Downloads PDF resume from public directory
+    
+    ```typescript
+    {
+      id: "resume",
+      label: content.hero.actions.resume.label[lang],
+      icon: Download,
+      href: "/Curriculo_Thalyson_Ribeiro-full-stack.pdf",
+      download: "Curriculo_Thalyson_Ribeiro-full-stack.pdf",
+      variant: "outline"
+    }
+    ```
+  </Step>
+</Steps>
+
+## Visual Effects
+
+### Background Glows
+
+The Hero includes premium background effects for visual depth:
+
+```tsx
+{/* Premium Background Glows */}
+<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none opacity-50" />
+<div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
+```
+
+### Gradient Text Animation
+
+The name features an animated gradient effect:
+
+```tsx
+<span className="bg-gradient-to-r from-white via-primary to-white bg-[length:200%_auto] bg-clip-text text-transparent animate-gradient">
+  {translate(content.hero.name, lang)}
+</span>
+```
+
+## Features Badges
+
+Feature highlights are displayed as interactive badges:
+
+```typescript
+const FEATURES = content.hero.features;
+
+// Example feature structure:
+{
+  "id": "end-to-end",
+  "label": { 
+    "ptBR": "Do planejamento ao deploy", 
+    "en": "From planning to deployment" 
+  }
+}
+```
+
+## Customization Guide
+
+<Accordion title="Modify Animation Timing">
+  Edit the `ANIMATION_CONFIG` object to adjust:
+  - `staggerChildren`: Delay between child animations (default: 0.2s)
+  - `damping`: Spring animation bounciness (default: 20)
+  - `stiffness`: Spring animation speed (default: 100)
+</Accordion>
+
+<Accordion title="Change Action Buttons">
+  Update the `getActionButton` function in `hero.tsx:69` to:
+  - Add new buttons
+  - Modify existing button labels/links
+  - Change button variants (default/outline)
+</Accordion>
+
+<Accordion title="Update Content">
+  Edit `src/utils/content.json` under the `hero` key for:
+  - Role/title text
+  - Tagline and description
+  - Feature badges
+  - Button labels and aria-labels
+</Accordion>
+
+<Accordion title="Adjust Visual Effects">
+  Modify background glows by changing:
+  - Blur radius (e.g., `blur-[120px]`)
+  - Opacity levels (e.g., `opacity-50`)
+  - Positioning and size classes
+</Accordion>
+
+## Accessibility Features
+
+<Note>
+The Hero component follows accessibility best practices:
+- Semantic HTML with proper `<section>` and `<header>` tags
+- ARIA labels for all interactive elements
+- Keyboard navigation support
+- Screen reader friendly with `aria-labelledby`
+</Note>
+
+## Integration with Language System
+
+The Hero automatically responds to language changes:
+
+```typescript
+const { lang } = useLanguageStore();
+
+// Translation utility
+{translate(content.hero.tagline, lang)}
+```
+
+See [Internationalization](/features/internationalization) for more details on the i18n system.

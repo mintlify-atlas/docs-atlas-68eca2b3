@@ -1,0 +1,683 @@
+---
+title: 'Styling System'
+description: 'Customize design with Tailwind CSS 4, design tokens, and class-variance-authority'
+icon: 'palette'
+---
+
+## Overview
+
+Thalyson's Portfolio uses **Tailwind CSS 4** (latest version) with a custom design system built on:
+
+- **OKLCH color space** for perceptually uniform colors
+- **CSS custom properties** for theme tokens
+- **Inline theme configuration** using `@theme` directive
+- **Class Variance Authority (CVA)** for component variants
+- **Zero-config setup** with Tailwind 4's new architecture
+
+<Note>
+Tailwind CSS 4 introduces a new PostCSS-based architecture with native CSS cascade layers and improved performance. The configuration is dramatically simplified compared to v3.
+</Note>
+
+---
+
+## Project Structure
+
+```
+src/
+  app/
+    globals.css          # Main stylesheet with @theme inline config
+  components/
+    ui/                  # Shadcn-style components with CVA variants
+    me-ui/               # Custom component variants
+  utils/
+    cn.ts                # Class name utility (clsx + tailwind-merge)
+```
+
+---
+
+## Tailwind CSS 4 Configuration
+
+### PostCSS Setup
+
+The portfolio uses Tailwind 4's new PostCSS plugin:
+
+```javascript postcss.config.mjs
+const config = {
+  plugins: ["@tailwindcss/postcss"]
+};
+
+export default config;
+```
+
+<Tip>
+No `tailwind.config.js` file needed! Tailwind 4 uses inline configuration within your CSS file using the `@theme` directive.
+</Tip>
+
+---
+
+### Dependencies
+
+```json package.json
+{
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.0"
+  }
+}
+```
+
+---
+
+## Design Tokens (CSS Variables)
+
+### Theme Configuration
+
+All design tokens are defined inline in `globals.css` using the `@theme` directive:
+
+```css src/app/globals.css
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  /* Color tokens */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  
+  /* Border radius tokens */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+```
+
+<Warning>
+The `@theme inline` block maps Tailwind utilities to CSS custom properties. This is the Tailwind 4 way of configuring design tokens.
+</Warning>
+
+---
+
+### Root Color Palette (OKLCH)
+
+The portfolio uses **OKLCH color space** for superior color consistency across devices:
+
+```css src/app/globals.css
+:root {
+  --radius: 0;
+  
+  /* Background & Foreground */
+  --background: oklch(0.145 0 0);           /* Dark background */
+  --foreground: oklch(0.985 0 0);           /* Light text */
+  
+  /* Cards */
+  --card: oklch(0.205 0 0);                 /* Slightly lighter than bg */
+  --card-foreground: oklch(0.985 0 0);
+  
+  /* Primary brand color */
+  --primary: oklch(0.922 0 0);              /* Off-white primary */
+  --primary-foreground: oklch(0.205 0 0);   /* Dark text on primary */
+  
+  /* Secondary & Muted */
+  --secondary: oklch(0.269 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  
+  /* Borders & Inputs */
+  --border: oklch(1 0 0 / 10%);             /* 10% opacity white */
+  --input: oklch(1 0 0 / 15%);              /* 15% opacity white */
+  
+  /* Destructive (errors) */
+  --destructive: oklch(0.704 0.191 22.216); /* Red with chroma */
+  
+  /* Chart colors */
+  --chart-1: oklch(0.488 0.243 264.376);    /* Purple */
+  --chart-2: oklch(0.696 0.17 162.48);      /* Teal */
+  --chart-3: oklch(0.769 0.188 70.08);      /* Yellow */
+}
+```
+
+<Accordion title="Why OKLCH over RGB/HSL?">
+**OKLCH advantages:**
+- Perceptually uniform brightness across hues
+- More accurate color interpolation
+- Better contrast control
+- Future-proof (CSS Color Level 4 spec)
+
+**Format:** `oklch(lightness chroma hue / alpha)`
+- Lightness: 0 (black) to 1 (white)
+- Chroma: 0 (gray) to ~0.4 (vivid)
+- Hue: 0-360 degrees
+</Accordion>
+
+---
+
+## Customizing Colors
+
+### Changing the Primary Color
+
+To change the brand color from off-white to purple:
+
+<Steps>
+
+<Step title="Find a color in OKLCH">
+Use a tool like [OKLCH Color Picker](https://oklch.com/) to find your desired color.
+
+Example: Vivid purple = `oklch(0.6 0.25 290)`
+</Step>
+
+<Step title="Update the primary token">
+```css src/app/globals.css
+:root {
+  --primary: oklch(0.6 0.25 290);           /* Vivid purple */
+  --primary-foreground: oklch(0.985 0 0);   /* White text on purple */
+}
+```
+</Step>
+
+<Step title="Check contrast">
+Ensure `--primary-foreground` has sufficient contrast for accessibility (4.5:1 ratio minimum).
+</Step>
+
+</Steps>
+
+<Tip>
+Use Chrome DevTools to preview OKLCH colors: Right-click any color in the Styles panel and convert to OKLCH.
+</Tip>
+
+---
+
+### Adding New Color Tokens
+
+<Steps>
+
+<Step title="Define CSS variable in :root">
+```css src/app/globals.css
+:root {
+  --accent-purple: oklch(0.55 0.22 280);
+  --accent-purple-foreground: oklch(0.99 0 0);
+}
+```
+</Step>
+
+<Step title="Map to Tailwind via @theme">
+```css src/app/globals.css
+@theme inline {
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-purple-foreground: var(--accent-purple-foreground);
+}
+```
+</Step>
+
+<Step title="Use in components with Tailwind utilities">
+```tsx
+<div className="bg-accent-purple text-accent-purple-foreground">
+  Custom accent color
+</div>
+```
+</Step>
+
+</Steps>
+
+---
+
+## Typography
+
+### Font Configuration
+
+The portfolio uses **Geist Sans** and **Geist Mono** (loaded via `next/font`):
+
+```css src/app/globals.css
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+```
+
+These map to Tailwind's `font-sans` and `font-mono` utilities.
+
+---
+
+### Loading Custom Fonts
+
+To add a custom font:
+
+<Steps>
+
+<Step title="Import font in layout.tsx">
+```tsx src/app/layout.tsx
+import { Inter } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+export default function RootLayout({ children }) {
+  return (
+    <html className={inter.variable}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+</Step>
+
+<Step title="Map to Tailwind theme">
+```css src/app/globals.css
+@theme inline {
+  --font-inter: var(--font-inter);
+}
+```
+</Step>
+
+<Step title="Apply to elements">
+```tsx
+<h1 className="font-inter">Custom Font Heading</h1>
+```
+</Step>
+
+</Steps>
+
+---
+
+## Component Variants (CVA)
+
+The portfolio uses **class-variance-authority** for type-safe component styling with variants.
+
+### Example: Button Component
+
+```tsx src/components/me-ui/button.tsx
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/utils/cn";
+
+const buttonVariants = cva(
+  // Base styles (applied to all variants)
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 rounded-none",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        destructive: "bg-destructive text-white shadow-xs hover:bg-destructive/90",
+        outline: "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline"
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 gap-1.5 px-3",
+        lg: "h-10 px-6",
+        xl: "h-14 px-10 text-base",
+        icon: "size-9"
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default"
+    }
+  }
+);
+
+function Button({ className, variant, size, ...props }: VariantProps<typeof buttonVariants>) {
+  return (
+    <button className={cn(buttonVariants({ variant, size, className }))} {...props} />
+  );
+}
+```
+
+**Usage:**
+
+```tsx
+<Button variant="outline" size="lg">Click Me</Button>
+<Button variant="destructive">Delete</Button>
+```
+
+---
+
+### Creating a New Variant
+
+<Steps>
+
+<Step title="Add variant to CVA config">
+```tsx
+const buttonVariants = cva("...", {
+  variants: {
+    variant: {
+      default: "...",
+      gradient: "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+    }
+  }
+});
+```
+</Step>
+
+<Step title="Use the new variant">
+```tsx
+<Button variant="gradient">Gradient Button</Button>
+```
+</Step>
+
+</Steps>
+
+---
+
+## Custom Utilities
+
+### Glass Card Effect
+
+A custom utility for glassmorphism effects:
+
+```css src/app/globals.css
+@layer utilities {
+  .glass-card {
+    background: color-mix(in oklch, var(--card) 70%, transparent);
+    backdrop-filter: blur(8px);
+    border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  }
+}
+```
+
+**Usage:**
+
+```tsx
+<div className="glass-card p-6">
+  <h2>Glassmorphism Card</h2>
+</div>
+```
+
+---
+
+### Animated Gradient Text
+
+```css src/app/globals.css
+@layer utilities {
+  .animate-gradient {
+    animation: gradient 8s linear infinite;
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}
+```
+
+**Usage:**
+
+```tsx
+<h1 className="bg-gradient-to-r from-white via-primary to-white bg-[length:200%_auto] bg-clip-text text-transparent animate-gradient">
+  Animated Gradient Text
+</h1>
+```
+
+---
+
+### Shine Effect (Hover Animation)
+
+```css src/app/globals.css
+@layer utilities {
+  .animate-shine {
+    animation: shine 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shine {
+    from { transform: translateX(-200%); }
+    to { transform: translateX(200%); }
+  }
+}
+```
+
+**Usage with overlay:**
+
+```tsx
+<button className="relative group overflow-hidden">
+  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[200%] group-hover:animate-shine" />
+  <span>Hover Me</span>
+</button>
+```
+
+---
+
+## Responsive Design
+
+Tailwind's breakpoints work as expected:
+
+```tsx
+<div className="text-sm md:text-base lg:text-lg xl:text-xl">
+  Responsive Text
+</div>
+```
+
+**Default breakpoints:**
+- `sm`: 640px
+- `md`: 768px
+- `lg`: 1024px
+- `xl`: 1280px
+- `2xl`: 1536px
+
+---
+
+## Dark Mode Considerations
+
+The portfolio uses a **dark-first approach** with a custom dark mode variant:
+
+```css src/app/globals.css
+@custom-variant dark (&:is(.dark *));
+```
+
+This allows dark mode utilities:
+
+```tsx
+<div className="bg-zinc-900 dark:bg-zinc-800">
+  Dark mode aware
+</div>
+```
+
+<Note>
+The portfolio is currently dark-only, but the infrastructure supports light mode theming. To add light mode, define a `.light` class in `:root` with alternate color values.
+</Note>
+
+---
+
+## Utility Helper: cn()
+
+The `cn()` utility merges class names and handles conflicts:
+
+```typescript src/utils/cn.ts
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+**Why use cn()?**
+
+```tsx
+// Without cn() - latter class is ignored due to specificity
+<div className="px-4 px-6"> // Both applied, unpredictable result
+
+// With cn() - latter class wins
+<div className={cn("px-4", "px-6")}> // Only px-6 applied
+```
+
+**Conditional styling:**
+
+```tsx
+<div className={cn(
+  "text-base",
+  isActive && "font-bold text-primary",
+  isDisabled && "opacity-50 pointer-events-none"
+)}>
+  Conditional Styles
+</div>
+```
+
+---
+
+## Custom Scrollbar Styling
+
+```css src/app/globals.css
+::-webkit-scrollbar {
+  width: 5px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Firefox */
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+```
+
+---
+
+## Performance Optimizations
+
+### Reduce CSS Bundle Size
+
+Tailwind 4 automatically tree-shakes unused styles during build:
+
+```bash
+npm run build
+```
+
+No configuration needed!
+
+---
+
+### Avoid Arbitrary Values When Possible
+
+```tsx
+// Bad (arbitrary values generate extra CSS)
+<div className="text-[17px] mt-[13px]">
+
+// Good (use design tokens)
+<div className="text-lg mt-3">
+```
+
+---
+
+## Best Practices
+
+<Warning>
+**Always use the `cn()` utility** when combining dynamic class names to prevent conflicts and ensure proper merging.
+</Warning>
+
+### DO ✅
+
+```tsx
+import { cn } from "@/utils/cn";
+
+<div className={cn("px-4 py-2", isActive && "bg-primary", className)}>
+```
+
+### DON'T ❌
+
+```tsx
+// String concatenation can cause conflicts
+<div className={`px-4 py-2 ${isActive ? "bg-primary" : ""}`}>
+```
+
+---
+
+### Keep Design Tokens Consistent
+
+Use semantic token names:
+
+```css
+/* Good */
+--color-primary
+--color-accent
+--color-destructive
+
+/* Bad */
+--color-blue
+--color-purple-500
+--color-error-red
+```
+
+---
+
+### Leverage CSS Cascade Layers
+
+Tailwind 4 uses `@layer` for proper CSS specificity:
+
+```css
+@layer base {
+  body { @apply bg-background text-foreground; }
+}
+
+@layer utilities {
+  .custom-utility { ... }
+}
+```
+
+Layers ensure utility classes can override base styles.
+
+---
+
+## Troubleshooting
+
+### Styles Not Applying
+
+1. **Check PostCSS config** is correctly set up
+2. **Verify @import "tailwindcss"** is first line in globals.css
+3. **Ensure CSS file is imported** in `layout.tsx`
+
+---
+
+### Color Not Rendering Correctly
+
+- Use browser DevTools to verify OKLCH support (Chrome 111+, Safari 15.4+)
+- Add fallback colors for older browsers:
+
+```css
+:root {
+  --primary: #e5e5e5; /* Fallback */
+  --primary: oklch(0.922 0 0); /* Modern browsers */
+}
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+
+<Card title="Animation System" icon="wand-magic-sparkles" href="/customization/animations">
+Add motion to your components with Framer Motion
+</Card>
+
+<Card title="Content Management" icon="file-json" href="/customization/content-management">
+Update portfolio content via content.json
+</Card>
+
+</CardGroup>

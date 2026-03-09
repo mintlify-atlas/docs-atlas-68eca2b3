@@ -1,0 +1,597 @@
+---
+title: 'Tech Stack'
+description: 'Comprehensive overview of all technologies, libraries, and tools used in the portfolio'
+---
+
+## Overview
+
+This portfolio is built with a modern, production-ready tech stack focused on **performance**, **developer experience**, and **maintainability**. Every technology was carefully chosen based on specific requirements and trade-offs.
+
+## Core Technologies
+
+### Framework & Runtime
+
+<CodeGroup>
+```json package.json
+{
+  "dependencies": {
+    "next": "^16.1.5",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  }
+}
+```
+</CodeGroup>
+
+<Steps>
+  <Step title="Next.js 16.1.5">
+    **Why Next.js?**
+    - Built-in App Router for file-based routing
+    - Server Components for optimal performance
+    - Automatic code splitting and optimization
+    - Built-in image optimization
+    - API routes for backend functionality
+    - SEO-friendly with SSR/SSG support
+    - Excellent developer experience with Turbopack
+    
+    **Key Features Used:**
+    - App Router architecture
+    - Dynamic Open Graph images (`opengraph-image.tsx`)
+    - Dynamic sitemap generation (`sitemap.ts`)
+    - API Routes (`api/github/route.ts`)
+    - Server and Client Components
+    - Dynamic imports for code splitting
+  </Step>
+
+  <Step title="React 19.2.3">
+    **Why React 19?**
+    - Latest features and performance improvements
+    - Better concurrent rendering
+    - Improved Server Components support
+    - Enhanced TypeScript integration
+    - Action functions for forms
+    
+    **Features Used:**
+    - Hooks (useState, useEffect, useMemo, useCallback)
+    - Server Components (default in Next.js 16)
+    - Client Components (`"use client"` directive)
+    - Dynamic component loading
+  </Step>
+</Steps>
+
+<Warning>
+**Version Compatibility Note**: React 19 is a major version with breaking changes. Ensure all dependencies are compatible before upgrading existing projects.
+</Warning>
+
+## Styling & UI
+
+### CSS Framework
+
+<Accordion title="Tailwind CSS 4 (Beta)">
+```json package.json
+{
+  "devDependencies": {
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4"
+  }
+}
+```
+
+**Why Tailwind CSS 4?**
+- Utility-first CSS for rapid development
+- Zero runtime overhead (styles extracted at build time)
+- Excellent tree-shaking (unused styles removed)
+- Custom design system via CSS variables
+- JIT compiler for instant compilation
+- New PostCSS-based architecture in v4
+
+**Configuration:**
+- Custom color scheme using CSS variables
+- Font family with Geist Sans & Geist Mono
+- Responsive breakpoints
+- Dark mode support via CSS variables
+</Accordion>
+
+### Component Libraries
+
+<CodeGroup>
+```json package.json (UI Components)
+{
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "radix-ui": "^1.4.3"
+  }
+}
+```
+</CodeGroup>
+
+<Steps>
+  <Step title="Radix UI">
+    **Why Radix UI?**
+    - Unstyled, accessible components
+    - WAI-ARIA compliant
+    - Keyboard navigation built-in
+    - Focus management
+    - Highly customizable
+    - Works perfectly with Tailwind CSS
+    
+    **Components Used:**
+    - Dialog (modals)
+    - Dropdown Menu (navigation)
+    - Label (form labels)
+    - Slot (polymorphic components)
+  </Step>
+
+  <Step title="shadcn/ui Pattern">
+    **Why shadcn/ui?**
+    - Not a library, but a collection of copy-paste components
+    - Full ownership of component code
+    - Built on Radix UI + Tailwind CSS
+    - TypeScript-first
+    - Customizable without fighting abstractions
+    
+    **Implementation:**
+    - Components live in `src/components/ui/`
+    - Configured via `components.json`
+    - Custom variants using `class-variance-authority`
+  </Step>
+</Steps>
+
+### Utility Libraries
+
+<CodeGroup>
+```json package.json (Styling Utilities)
+{
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.0"
+  }
+}
+```
+</CodeGroup>
+
+| Library | Purpose | Usage |
+|---------|---------|-------|
+| `clsx` | Conditional className construction | `clsx({ 'bg-red': error })` |
+| `tailwind-merge` | Merge Tailwind classes without conflicts | `twMerge('p-4', 'p-2')` → `p-2` |
+| `class-variance-authority` | Type-safe component variants | Button sizes/variants |
+
+**Combined Utility:**
+```typescript
+// src/utils/cn.ts
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+## Animation & Interactions
+
+<CodeGroup>
+```json package.json (Animations)
+{
+  "dependencies": {
+    "framer-motion": "^12.17.0"
+  }
+}
+```
+</CodeGroup>
+
+### Framer Motion
+
+**Why Framer Motion?**
+- Declarative animation API
+- Spring physics for natural motion
+- Gesture recognition (drag, tap, hover)
+- Layout animations
+- Scroll-triggered animations
+- Excellent TypeScript support
+- Production-optimized performance
+
+**Features Used:**
+- Page transitions
+- Scroll animations
+- Hover effects
+- Drag interactions (`use-drag-scroll.ts`)
+- Animated number counters
+- Stagger animations for lists
+
+<Tip>
+Framer Motion's `motion` components are tree-shakeable. Only import the components you use to keep bundle size small.
+</Tip>
+
+## Forms & Validation
+
+<CodeGroup>
+```json package.json (Forms)
+{
+  "dependencies": {
+    "react-hook-form": "^7.57.0",
+    "@hookform/resolvers": "^5.1.1",
+    "zod": "^3.25.58"
+  }
+}
+```
+</CodeGroup>
+
+<Steps>
+  <Step title="React Hook Form">
+    **Why React Hook Form?**
+    - Minimal re-renders (uncontrolled forms)
+    - Built-in validation
+    - Small bundle size (~9KB)
+    - Excellent TypeScript support
+    - Easy integration with UI libraries
+    
+    **Used In:**
+    - Contact form (`src/components/contact.tsx`)
+    - Form field management
+    - Error handling
+  </Step>
+
+  <Step title="Zod">
+    **Why Zod?**
+    - TypeScript-first schema validation
+    - Runtime type checking
+    - Automatic type inference
+    - Great error messages
+    - Composable schemas
+    
+    **Integration:**
+    ```typescript
+    import { z } from "zod";
+    import { zodResolver } from "@hookform/resolvers/zod";
+    
+    const schema = z.object({
+      email: z.string().email(),
+      message: z.string().min(10)
+    });
+    
+    const form = useForm({
+      resolver: zodResolver(schema)
+    });
+    ```
+  </Step>
+</Steps>
+
+## State Management
+
+<CodeGroup>
+```json package.json (State)
+{
+  "dependencies": {
+    "zustand": "^5.0.11"
+  }
+}
+```
+</CodeGroup>
+
+### Zustand
+
+**Why Zustand over Redux/Context?**
+- ✅ Minimal boilerplate (no providers, actions, reducers)
+- ✅ Small bundle size (~1KB)
+- ✅ No Context Provider hell
+- ✅ Built-in TypeScript support
+- ✅ Middleware support (persist, devtools)
+- ✅ Works seamlessly with React 19
+
+**Alternatives Considered:**
+- ❌ **Redux**: Too much boilerplate for simple state
+- ❌ **Context API**: Performance issues with frequent updates
+- ❌ **Jotai**: Good, but Zustand has better DX for this use case
+- ❌ **Recoil**: Meta library with uncertain future
+
+**Implementation:**
+See [State Management](/development/state-management) for detailed usage.
+
+## Icons
+
+<CodeGroup>
+```json package.json (Icons)
+{
+  "dependencies": {
+    "lucide-react": "^0.514.0",
+    "react-icons": "^5.5.0"
+  }
+}
+```
+</CodeGroup>
+
+<Accordion title="Icon Libraries">
+**Lucide React** (Primary)
+- Modern, consistent icon set
+- Tree-shakeable (only import icons you use)
+- Customizable size, color, stroke
+- 1000+ icons
+
+**React Icons** (Secondary)
+- Access to multiple icon sets (Font Awesome, Material, etc.)
+- Social media icons
+- Brand logos
+- Fallback for icons not in Lucide
+
+**Usage:**
+```typescript
+import { Github, Mail, Linkedin } from "lucide-react";
+import { SiTypescript, SiReact } from "react-icons/si";
+
+<Github size={24} strokeWidth={1.5} />
+<SiTypescript className="text-blue-500" />
+```
+</Accordion>
+
+## Notifications
+
+<CodeGroup>
+```json package.json (Notifications)
+{
+  "dependencies": {
+    "sonner": "^2.0.5"
+  }
+}
+```
+</CodeGroup>
+
+### Sonner
+
+**Why Sonner?**
+- Beautiful, opinionated toast notifications
+- Stacking behavior out of the box
+- Promise-based toasts for async operations
+- Keyboard accessible
+- Dark mode support
+- Minimal setup required
+
+**Usage:**
+```typescript
+import { toast } from "sonner";
+
+toast.success("Message sent!");
+toast.error("Something went wrong");
+toast.promise(sendEmail(), {
+  loading: "Sending...",
+  success: "Sent!",
+  error: "Failed"
+});
+```
+
+## Development Tools
+
+### TypeScript
+
+<CodeGroup>
+```json package.json (TypeScript)
+{
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
+  }
+}
+```
+</CodeGroup>
+
+**Configuration Highlights:**
+- Strict mode enabled (`strict: true`)
+- Path aliases (`@/*`)
+- JSX: `react-jsx` (React 19 new JSX transform)
+- Target: ES2017 (broad browser support)
+
+### Code Quality
+
+<CodeGroup>
+```json package.json (Linting & Formatting)
+{
+  "devDependencies": {
+    "eslint": "^9",
+    "eslint-config-next": "15.3.3",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "@eslint/eslintrc": "^3"
+  }
+}
+```
+</CodeGroup>
+
+<Steps>
+  <Step title="ESLint">
+    **Configuration:**
+    - Next.js recommended rules
+    - Prettier integration (no conflicts)
+    - React Hooks rules
+    - Accessibility checks
+    
+    **Commands:**
+    ```bash
+    npm run lint        # Check for errors
+    npm run lint --fix  # Auto-fix issues
+    ```
+  </Step>
+
+  <Step title="Prettier">
+    **Configuration (`.prettierrc`):**
+    ```json
+    {
+      "semi": true,
+      "trailingComma": "none",
+      "singleQuote": false,
+      "printWidth": 100,
+      "tabWidth": 2
+    }
+    ```
+    
+    **Commands:**
+    ```bash
+    npm run format     # Format all files
+    ```
+  </Step>
+</Steps>
+
+## Build Tools & Optimization
+
+<CodeGroup>
+```json package.json (Build Tools)
+{
+  "dependencies": {
+    "@next/bundle-analyzer": "^16.1.1",
+    "cross-env": "^10.1.0"
+  },
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start"
+  }
+}
+```
+</CodeGroup>
+
+### Build Features
+
+| Tool | Purpose | Benefits |
+|------|---------|----------|
+| **Turbopack** | Next.js bundler (beta) | 700x faster than Webpack |
+| **Bundle Analyzer** | Visualize bundle size | Identify optimization opportunities |
+| **cross-env** | Cross-platform env vars | Works on Windows/Mac/Linux |
+
+**Analyze Bundle:**
+```bash
+ANALYZE=true npm run build
+```
+
+## Performance Optimizations
+
+<Accordion title="Implemented Optimizations">
+1. **Image Optimization**
+   - WebP format for all images
+   - Next.js Image component with lazy loading
+   - Cloudinary remote pattern for external images
+
+2. **Code Splitting**
+   - Dynamic imports for heavy components
+   - Route-based splitting (automatic with App Router)
+   - Lazy-loaded sections on home page
+
+3. **Font Optimization**
+   - Self-hosted Google Fonts (Geist Sans & Mono)
+   - Font display: swap
+   - Variable fonts for size reduction
+
+4. **Bundle Size**
+   - Tree-shaking enabled
+   - Import only needed icons
+   - No moment.js (using native Date)
+   - Minimal dependencies
+
+5. **Caching**
+   - Static generation where possible
+   - LocalStorage for user preferences
+   - Service worker ready (PWA potential)
+</Accordion>
+
+## Version Compatibility Matrix
+
+| Package | Version | Compatible With |
+|---------|---------|-----------------|
+| Next.js | 16.1.5 | React 19+ |
+| React | 19.2.3 | Next.js 15+ |
+| Tailwind CSS | 4.x | PostCSS 8+ |
+| TypeScript | 5.x | Next.js 15+ |
+| Framer Motion | 12.x | React 18-19 |
+| Zustand | 5.x | React 18-19 |
+| React Hook Form | 7.x | React 16.8+ |
+| Zod | 3.x | TypeScript 4.5+ |
+
+<Warning>
+**Breaking Changes in React 19:**
+- New JSX transform (automatic runtime)
+- Stricter hooks rules
+- Removed legacy context
+- Server Components changes
+
+Ensure all dependencies are compatible before upgrading.
+</Warning>
+
+## Why Not...?
+
+<Accordion title="Alternative Technologies Considered">
+**Why not Vue/Svelte?**
+- React has the largest ecosystem and job market
+- Next.js is the industry standard for React SSR
+- Better TypeScript integration
+
+**Why not Remix?**
+- Next.js has more mature App Router
+- Better build tooling (Turbopack)
+- Larger community and resources
+
+**Why not Astro?**
+- Need more dynamic interactivity
+- Zustand state management works better with React
+- Component islands not needed for this use case
+
+**Why not styled-components/Emotion?**
+- Tailwind CSS has better performance (no runtime)
+- Easier to maintain with utility classes
+- Better tree-shaking
+
+**Why not Redux?**
+- Zustand is simpler for this scale
+- Less boilerplate
+- Better performance for small apps
+
+**Why not SWR/React Query?**
+- Minimal data fetching needs
+- Static content from JSON files
+- GitHub API called server-side only
+</Accordion>
+
+## Future Considerations
+
+<Note>
+Technologies being considered for future additions:
+- **Vitest**: Fast unit testing (replacing Jest)
+- **Playwright**: E2E testing
+- **tRPC**: Type-safe API calls (if backend grows)
+- **TanStack Query**: If more data fetching is needed
+- **Storybook**: Component documentation
+</Note>
+
+---
+
+## Quick Reference
+
+### Install All Dependencies
+```bash
+npm install
+```
+
+### Development
+```bash
+npm run dev          # Start dev server with Turbopack
+npm run build        # Production build
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run format       # Format with Prettier
+```
+
+### Dependency Categories
+- **Framework**: Next.js 16, React 19
+- **Styling**: Tailwind CSS 4, Radix UI
+- **State**: Zustand
+- **Forms**: React Hook Form + Zod
+- **Animation**: Framer Motion
+- **Icons**: Lucide React, React Icons
+- **Notifications**: Sonner
+- **Dev Tools**: TypeScript, ESLint, Prettier
+
+<Tip>
+See [Project Structure](/development/project-structure) for file organization and [State Management](/development/state-management) for Zustand implementation.
+</Tip>

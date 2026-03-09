@@ -1,0 +1,378 @@
+---
+title: 'Project Structure'
+description: 'Complete overview of the Next.js 16 App Router project structure and file organization'
+---
+
+## Overview
+
+This portfolio is built with **Next.js 16** using the modern App Router architecture. The project follows a clean, modular structure that separates concerns and makes the codebase easy to navigate and maintain.
+
+## Directory Structure
+
+<Accordion title="Complete Directory Tree">
+```
+my-app/
+├── public/                        # Static assets
+│   ├── profile.webp              # Profile image
+│   ├── og-image.webp             # Open Graph image
+│   ├── grad-squar.webp           # Gradient background
+│   ├── Curriculo_*.pdf           # Resume PDF
+│   ├── barber-pro/               # Project images
+│   ├── blend-house/              # Project images
+│   ├── eq-center/                # Project images
+│   ├── theme-vexiun/             # Project images
+│   └── ticketflow/               # Project images
+├── src/
+│   ├── app/                      # Next.js 16 App Router
+│   │   ├── api/                  # API routes
+│   │   │   └── github/
+│   │   │       └── route.ts      # GitHub API endpoint
+│   │   ├── hooks/                # Custom React hooks
+│   │   │   ├── use-drag-scroll.ts
+│   │   │   ├── use-language-hydrate.ts
+│   │   │   └── useMobile.tsx
+│   │   ├── privacy-policy/       # Privacy policy page
+│   │   │   └── page.tsx
+│   │   ├── favicon.ico           # Favicon
+│   │   ├── globals.css           # Global styles
+│   │   ├── layout.tsx            # Root layout
+│   │   ├── page.tsx              # Home page
+│   │   ├── opengraph-image.tsx   # Dynamic OG image
+│   │   ├── robots.ts             # Robots.txt config
+│   │   └── sitemap.ts            # Sitemap config
+│   ├── components/               # React components
+│   │   ├── ui/                   # shadcn/ui components
+│   │   │   ├── badge.tsx
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   ├── dropdown-menu.tsx
+│   │   │   ├── form.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── label.tsx
+│   │   │   ├── select.tsx
+│   │   │   ├── sheet.tsx
+│   │   │   └── textarea.tsx
+│   │   ├── me-ui/                # Custom UI components
+│   │   │   ├── badge.tsx
+│   │   │   ├── button.tsx
+│   │   │   └── card.tsx
+│   │   ├── Squares.tsx           # Animated background
+│   │   ├── about.tsx             # About section
+│   │   ├── animated-number.tsx   # Number animation
+│   │   ├── animatedBackground.tsx
+│   │   ├── background.tsx
+│   │   ├── between-section.tsx   # Section divider
+│   │   ├── carousel-image-projects.tsx
+│   │   ├── contact.tsx           # Contact form
+│   │   ├── cookie-consent.tsx    # Cookie banner
+│   │   ├── footer.tsx            # Footer component
+│   │   ├── github-stats.tsx      # GitHub statistics
+│   │   ├── google-analytics.tsx  # GA integration
+│   │   ├── header.tsx            # Navigation header
+│   │   ├── hero.tsx              # Hero section
+│   │   ├── projects.tsx          # Projects showcase
+│   │   ├── select-language.tsx   # Language switcher
+│   │   └── technical-decisions.tsx
+│   ├── store/                    # Zustand state management
+│   │   └── language-store.ts     # Language preference store
+│   └── utils/                    # Utility functions
+│       ├── cn.ts                 # className utility
+│       ├── content.json          # Content data
+│       ├── get-icon.tsx          # Icon helper
+│       ├── i18n.ts               # Internationalization
+│       └── scrollTosection.ts    # Smooth scroll
+├── .eslintrc.json                # ESLint configuration
+├── .gitignore
+├── .prettierignore
+├── .prettierrc                   # Prettier configuration
+├── components.json               # shadcn/ui config
+├── eslint.config.mjs
+├── next.config.ts                # Next.js configuration
+├── package.json
+├── postcss.config.mjs            # PostCSS configuration
+├── tsconfig.json                 # TypeScript configuration
+└── README.md
+```
+</Accordion>
+
+## Key Directories Explained
+
+### `src/app/` - Next.js App Router
+
+The `app` directory uses Next.js 16's file-system based routing. Each folder represents a route segment.
+
+<Steps>
+  <Step title="Root Files">
+    - **`layout.tsx`**: Root layout wrapping all pages with fonts, metadata, analytics
+    - **`page.tsx`**: Home page (`/` route) with all sections
+    - **`globals.css`**: Global Tailwind CSS styles and custom CSS variables
+  </Step>
+
+  <Step title="API Routes">
+    - **`api/github/route.ts`**: Server-side API endpoint for GitHub data fetching
+    - Follows Next.js 16 Route Handlers pattern
+  </Step>
+
+  <Step title="Special Files">
+    - **`opengraph-image.tsx`**: Dynamic Open Graph image generation
+    - **`robots.ts`**: SEO robots.txt configuration
+    - **`sitemap.ts`**: Dynamic XML sitemap generation
+  </Step>
+
+  <Step title="Custom Hooks">
+    Located in `app/hooks/`:
+    - **`use-language-hydrate.ts`**: Hydrates language state from localStorage
+    - **`use-drag-scroll.ts`**: Drag-to-scroll functionality
+    - **`useMobile.tsx`**: Mobile device detection
+  </Step>
+</Steps>
+
+<Note>
+The `app` directory also contains hooks because they're closely tied to the application logic. This is a common pattern in Next.js 16 projects.
+</Note>
+
+### `src/components/` - React Components
+
+Components are organized by purpose:
+
+```typescript
+components/
+├── ui/              // shadcn/ui base components (Radix UI + Tailwind)
+├── me-ui/           // Custom-styled UI components
+└── *.tsx            // Feature components (hero, about, contact, etc.)
+```
+
+<Accordion title="Component Organization Strategy">
+- **`ui/`**: Reusable, unstyled UI primitives from shadcn/ui
+- **`me-ui/`**: Custom-branded versions of UI components with specific styling
+- **Root level**: Feature-specific components tied to page sections
+</Accordion>
+
+<Tip>
+Components use dynamic imports in `page.tsx` to optimize initial load performance:
+```tsx
+const Projects = dynamic(() => 
+  import("@/components/projects").then((mod) => mod.Projects)
+);
+```
+</Tip>
+
+### `src/store/` - State Management
+
+<CodeGroup>
+```typescript src/store/language-store.ts
+"use client";
+
+import { create } from "zustand";
+
+export type Lang = "ptBR" | "en";
+
+type LanguageState = {
+  lang: Lang;
+  hydrated: boolean;
+  hydrate: () => void;
+  setLang: (lang: Lang) => void;
+};
+
+const KEY = "portfolio-language";
+
+export const useLanguageStore = create<LanguageState>((set, get) => ({
+  lang: "ptBR",
+  hydrated: false,
+
+  hydrate: () => {
+    if (get().hydrated) return;
+    const stored = (localStorage.getItem(KEY) as Lang | null) ?? "ptBR";
+    set({ lang: stored, hydrated: true });
+  },
+
+  setLang: (lang) => {
+    localStorage.setItem(KEY, lang);
+    set({ lang });
+  }
+}));
+```
+</CodeGroup>
+
+Contains Zustand stores for global client-side state. Currently manages:
+- **Language preference** (Portuguese/English)
+- **localStorage persistence** for user preferences
+
+### `src/utils/` - Utility Functions
+
+<CodeGroup>
+```typescript src/utils/cn.ts
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+```typescript src/utils/i18n.ts
+type Lang = "ptBR" | "en";
+type I18nText = string | { ptBR: string; en: string };
+
+export function translate(value: I18nText, lang: Lang) {
+  if (typeof value === "string") return value;
+  return value[lang] ?? value.ptBR;
+}
+```
+</CodeGroup>
+
+Utility functions include:
+- **`cn.ts`**: Tailwind className merging utility
+- **`i18n.ts`**: Simple translation helper
+- **`content.json`**: All content data (projects, skills, about)
+- **`get-icon.tsx`**: Dynamic icon component loader
+- **`scrollTosection.ts`**: Smooth scroll navigation
+
+### `public/` - Static Assets
+
+All static files served directly by Next.js:
+- Images (`.webp` format for optimization)
+- PDF resume
+- Project screenshots organized in folders
+- Favicon and Open Graph images
+
+<Warning>
+Files in `public/` are served at the root URL. For example, `public/profile.webp` is accessible at `/profile.webp`.
+</Warning>
+
+## Import Aliases & Path Configuration
+
+The project uses TypeScript path aliases for cleaner imports:
+
+<CodeGroup>
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
+</CodeGroup>
+
+This allows you to import like this:
+
+```typescript
+// ✅ With alias
+import { useLanguageStore } from "@/store/language-store";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/utils/cn";
+
+// ❌ Without alias (verbose)
+import { useLanguageStore } from "../../store/language-store";
+import { Button } from "../../components/ui/button";
+```
+
+## File Naming Conventions
+
+<Steps>
+  <Step title="Component Files">
+    - React components: `kebab-case.tsx` (e.g., `select-language.tsx`)
+    - Component names: `PascalCase` (e.g., `SelectLanguage`)
+  </Step>
+
+  <Step title="Utility Files">
+    - Helper functions: `kebab-case.ts` (e.g., `scroll-to-section.ts`)
+    - Data files: `kebab-case.json` (e.g., `content.json`)
+  </Step>
+
+  <Step title="Next.js Special Files">
+    - Layout: `layout.tsx`
+    - Page: `page.tsx`
+    - Route handler: `route.ts`
+    - Metadata: `opengraph-image.tsx`, `robots.ts`, `sitemap.ts`
+  </Step>
+
+  <Step title="Hooks">
+    - Custom hooks: `use-kebab-case.ts` (e.g., `use-language-hydrate.ts`)
+    - Follow React hooks naming convention with `use` prefix
+  </Step>
+</Steps>
+
+## Code Organization Best Practices
+
+### 1. Component Co-location
+Components that are only used in one place should live close to where they're used.
+
+### 2. Separation of Concerns
+- **UI components** (`ui/`): Pure presentation, no business logic
+- **Feature components**: Contain business logic and compose UI components
+- **Hooks**: Reusable stateful logic
+- **Utils**: Pure functions, no side effects
+
+### 3. Server vs Client Components
+```typescript
+// Server Component (default in App Router)
+export default function Page() {
+  return <div>Server rendered</div>;
+}
+
+// Client Component (interactive)
+"use client";
+export function Interactive() {
+  const [count, setCount] = useState(0);
+  return <button onClick={() => setCount(count + 1)}>{count}</button>;
+}
+```
+
+<Tip>
+Use `"use client"` directive only when you need:
+- React hooks (useState, useEffect, etc.)
+- Browser APIs (localStorage, window, etc.)
+- Event listeners (onClick, onChange, etc.)
+</Tip>
+
+### 4. Dynamic Imports for Performance
+Large components are dynamically imported to reduce initial bundle size:
+
+```typescript
+const Projects = dynamic(() => 
+  import("@/components/projects").then((mod) => mod.Projects)
+);
+```
+
+## Configuration Files
+
+### TypeScript Configuration
+`tsconfig.json` is configured for Next.js with:
+- Strict mode enabled
+- Path aliases (`@/*`)
+- JSX preset for React 19
+- Modern ES2017 target
+
+### Next.js Configuration
+`next.config.ts` includes:
+- Bundle analyzer integration
+- Image optimization with Cloudinary
+- TypeScript support
+
+### Styling Configuration
+- **Tailwind CSS 4**: PostCSS-based setup
+- **shadcn/ui**: Component styling system
+- **Global CSS**: Custom properties and resets
+
+---
+
+## Quick Reference
+
+| Path | Purpose |
+|------|---------|
+| `src/app/page.tsx` | Home page (main entry point) |
+| `src/app/layout.tsx` | Root layout with fonts & metadata |
+| `src/components/ui/` | shadcn/ui components |
+| `src/components/me-ui/` | Custom UI components |
+| `src/store/` | Zustand state stores |
+| `src/utils/` | Helper functions & data |
+| `public/` | Static assets (images, PDFs) |
+| `src/app/api/` | API route handlers |
+
+<Note>
+See the [Tech Stack](/development/tech-stack) page for details on all dependencies and [State Management](/development/state-management) for Zustand implementation details.
+</Note>

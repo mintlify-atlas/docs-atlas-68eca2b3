@@ -1,0 +1,677 @@
+---
+title: 'GitHub Stats'
+description: 'Real-time GitHub statistics component with animated numbers and API integration'
+icon: 'github'
+---
+
+## Overview
+
+The `GithubStats` component displays real-time GitHub statistics including total repositories, commits, pull requests, and stars. It features animated number transitions and integrates with a Next.js API route that fetches data from the GitHub GraphQL API.
+
+## Component Interface
+
+```typescript title="src/components/github-stats.tsx"
+type Stats = {
+  totalRepos: number;
+  totalCommits: number;
+  totalPRs: number;
+  totalStars: number;
+};
+
+export function GithubStats({ lang }: { lang: Lang }) {
+  // Component implementation
+}
+```
+
+### Props
+
+<ParamField path="lang" type="Lang" required>
+  Language code for internationalization (`"en"` or `"pt"`). Determines which labels to display.
+</ParamField>
+
+## Usage Examples
+
+<CodeGroup>
+```tsx Basic Usage
+import { GithubStats } from "@/components/github-stats";
+import { useLanguageStore } from "@/store/language-store";
+
+export function Hero() {
+  const { lang } = useLanguageStore();
+  
+  return (
+    <section>
+      <h1>My GitHub Activity</h1>
+      <GithubStats lang={lang} />
+    </section>
+  );
+}
+```
+
+```tsx In Hero Section
+import { motion } from "framer-motion";
+import { GithubStats } from "@/components/github-stats";
+import { useLanguageStore } from "@/store/language-store";
+
+export function Hero() {
+  const { lang } = useLanguageStore();
+  
+  return (
+    <section className="min-h-screen flex flex-col items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <GithubStats lang={lang} />
+      </motion.div>
+    </section>
+  );
+}
+```
+</CodeGroup>
+
+## Visual Design
+
+The component displays four statistics with custom icons and colors:
+
+```typescript title="Statistics Configuration"
+const statsArray = [
+  {
+    value: stats?.totalRepos ?? 0,
+    label: content.githubStats.repos[lang],
+    icon: FolderGit2,
+    color: "text-blue-400"
+  },
+  {
+    value: stats?.totalCommits ?? 0,
+    label: content.githubStats.commits[lang],
+    icon: GitCommit,
+    color: "text-emerald-400"
+  },
+  {
+    value: stats?.totalPRs ?? 0,
+    label: content.githubStats.prs[lang],
+    icon: GitPullRequest,
+    color: "text-purple-400"
+  },
+  {
+    value: stats?.totalStars ?? 0,
+    label: content.githubStats.stars[lang],
+    icon: Star,
+    color: "text-yellow-400"
+  }
+];
+```
+
+<CardGroup cols={2}>
+  <Card title="Repositories" icon="folder">
+    <span style={{ color: '#60a5fa' }}>Blue</span> - Total public repositories
+  </Card>
+  <Card title="Commits" icon="git-commit">
+    <span style={{ color: '#34d399' }}>Emerald</span> - Total commits across all repositories
+  </Card>
+  <Card title="Pull Requests" icon="git-pull-request">
+    <span style={{ color: '#a78bfa' }}>Purple</span> - Total pull requests created
+  </Card>
+  <Card title="Stars" icon="star">
+    <span style={{ color: '#fbbf24' }}>Yellow</span> - Total stars received
+  </Card>
+</CardGroup>
+
+## Data Fetching
+
+The component fetches data from a Next.js API route on mount:
+
+```typescript title="Data Fetching Logic"
+useEffect(() => {
+  async function load() {
+    try {
+      const res = await fetch("/api/github", {
+        cache: "force-cache",
+        next: { revalidate: 86400 } // 24 hours
+      });
+      const json = await res.json();
+      setStats(json.data);
+    } catch (e) {
+      console.error("Erro ao carregar stats:", e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  load();
+}, []);
+```
+
+<Note>
+The data is cached for 24 hours (`86400` seconds) to minimize API calls and respect GitHub's rate limits.
+</Note>
+
+## API Integration
+
+The GitHub data is fetched via a Next.js API route that queries the GitHub GraphQL API.
+
+### API Route Implementation
+
+```typescript title="src/app/api/github/route.ts" showLineNumbers
+import { NextResponse } from "next/server";
+
+const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
+export async function GET() {
+  if (!GITHUB_USERNAME || !GITHUB_TOKEN) {
+    return NextResponse.json({ error: "Missing GitHub credentials" }, { status: 500 });
+  }
+  
+  const query = `
+  {
+    user(login: "${GITHUB_USERNAME}") {
+      repositories(ownerAffiliations: OWNER, first: 100) {
+        totalCount
+        nodes {
+          stargazerCount
+          defaultBranchRef {
+            target {
+              ... on Commit {
+                history(first: 0) {
+                  totalCount
+                }
+              }
+            }
+          }
+        }
+      }
+      pullRequests {
+        totalCount
+      }
+    }
+  }
+  `;
+
+  const res = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${GITHUB_TOKEN}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ query }),
+    cache: "no-store"
+  });
+
+  if (!res.ok) return NextResponse.json({ error: "GitHub GraphQL failed" }, { status: 500 });
+
+  const { data } = await res.json();
+
+  const repos = data.user.repositories.nodes;
+  const totalRepos = data.user.repositories.totalCount;
+  const totalStars = repos.reduce((sum: number, r: any) => sum + r.stargazerCount, 0);
+  const totalCommits = repos.reduce(
+    (sum: number, r: any) => sum + (r.defaultBranchRef?.target?.history?.totalCount ?? 0),
+    0
+  );
+  const totalPRs = data.user.pullRequests.totalCount;
+
+  return NextResponse.json({
+    success: true,
+    data: {
+      username: GITHUB_USERNAME,
+      totalRepos,
+      totalStars,
+      totalPRs,
+      totalCommits
+    }
+  });
+}
+```
+
+### Environment Variables
+
+Add these environment variables to your `.env.local`:
+
+```bash title=".env.local"
+GITHUB_USERNAME=your-github-username
+GITHUB_TOKEN=ghp_your_personal_access_token
+```
+
+<Steps>
+  <Step title="Create GitHub Personal Access Token">
+    Go to [GitHub Settings → Developer Settings → Personal Access Tokens](https://github.com/settings/tokens)
+  </Step>
+  <Step title="Generate New Token (Classic)">
+    Select the following scopes:
+    - `read:user` - Read user profile data
+    - `repo` (optional) - Access repository data including private repos
+  </Step>
+  <Step title="Copy Token">
+    Copy the generated token and add it to your `.env.local` file
+  </Step>
+  <Step title="Set Username">
+    Add your GitHub username to `GITHUB_USERNAME` in `.env.local`
+  </Step>
+</Steps>
+
+<Warning>
+Never commit your `.env.local` file or expose your GitHub token publicly. Always use environment variables for sensitive credentials.
+</Warning>
+
+## GraphQL Query Explanation
+
+The API uses GitHub's GraphQL API to fetch data efficiently:
+
+```graphql
+{
+  user(login: "username") {
+    # Get total count of repositories owned by user
+    repositories(ownerAffiliations: OWNER, first: 100) {
+      totalCount
+      nodes {
+        # Star count for each repository
+        stargazerCount
+        # Commit count from default branch
+        defaultBranchRef {
+          target {
+            ... on Commit {
+              history(first: 0) {
+                totalCount
+              }
+            }
+          }
+        }
+      }
+    }
+    # Total pull requests created by user
+    pullRequests {
+      totalCount
+    }
+  }
+}
+```
+
+<Tip>
+The query uses `first: 100` for repositories. If you have more than 100 repositories, implement pagination to fetch all repos:
+
+```graphql
+repositories(ownerAffiliations: OWNER, first: 100, after: $cursor) {
+  pageInfo {
+    hasNextPage
+    endCursor
+  }
+  # ... rest of query
+}
+```
+</Tip>
+
+## Animated Numbers
+
+The component uses the `AnimatedNumber` component for smooth number transitions:
+
+```typescript title="src/components/animated-number.tsx"
+export function AnimatedNumber({ value, simbol = "+" }: { value: number; simbol?: string }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    const duration = 2000; // 2 seconds
+    const increment = end / (duration / 16); // 60 FPS
+
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return (
+    <span className="text-2xl font-bold">
+      {count}{simbol}
+    </span>
+  );
+}
+```
+
+### Animation Breakdown
+
+<Steps>
+  <Step title="Calculate Increment">
+    Divides the target value by the number of frames (2000ms / 16ms per frame = 125 frames)
+  </Step>
+  <Step title="Interval Loop">
+    Updates the count every 16ms (approximately 60 FPS)
+  </Step>
+  <Step title="Smooth Transition">
+    Gradually increments from 0 to the final value over 2 seconds
+  </Step>
+  <Step title="Cleanup">
+    Clears the interval when the component unmounts or value changes
+  </Step>
+</Steps>
+
+## Loading State
+
+While data is being fetched, the component displays a skeleton loader:
+
+```tsx
+if (loading) {
+  return (
+    <div className="flex gap-8 animate-pulse opacity-50">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="h-10 w-24 bg-white/5 rounded-none" />
+      ))}
+    </div>
+  );
+}
+```
+
+If data fails to load, the component returns `null` gracefully without breaking the page.
+
+## Styling and Layout
+
+The component uses a flexible layout that adapts to different screen sizes:
+
+```tsx
+return (
+  <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+    {statsArray.map((stat, index) => (
+      <div key={index} className="flex items-center gap-3 group transition-all">
+        <div
+          className={cn(
+            "p-2 bg-white/5 group-hover:bg-white/10 transition-colors rounded-none",
+            stat.color
+          )}
+        >
+          <stat.icon size={18} />
+        </div>
+        <div className="flex flex-col items-start translate-y-0.5">
+          <span className="text-xl font-bold tracking-tighter tabular-nums leading-none mb-1">
+            <AnimatedNumber value={stat.value} />
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
+            {stat.label}
+          </span>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+```
+
+### Key Styling Features
+
+- **Hover Effect**: Icon background lightens on hover (`group-hover:bg-white/10`)
+- **Tabular Numbers**: Uses `tabular-nums` for consistent number width
+- **Responsive Gaps**: Different horizontal and vertical spacing
+- **Icon Colors**: Each stat has a unique color from the palette
+
+## Rate Limiting Considerations
+
+GitHub's GraphQL API has rate limits:
+
+- **Authenticated requests**: 5,000 points per hour
+- **Each query**: Costs varies based on complexity
+
+<CardGroup cols={2}>
+  <Card title="Caching Strategy" icon="database">
+    Cache responses for 24 hours to minimize API calls
+  </Card>
+  <Card title="Error Handling" icon="triangle-exclamation">
+    Gracefully handle failures without breaking the UI
+  </Card>
+  <Card title="Server-Side Rendering" icon="server">
+    Fetch data on the server when possible to hide API keys
+  </Card>
+  <Card title="Conditional Loading" icon="spinner">
+    Only fetch when component is visible (optional optimization)
+  </Card>
+</CardGroup>
+
+### Implementing Visibility-Based Loading
+
+To further optimize, only fetch data when the component is in view:
+
+```tsx
+import { useEffect, useState, useRef } from "react";
+import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+
+export function GithubStats({ lang }: { lang: Lang }) {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const entry = useIntersectionObserver(ref, { freezeOnceVisible: true });
+  const isVisible = !!entry?.isIntersecting;
+
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/github", {
+          cache: "force-cache",
+          next: { revalidate: 86400 }
+        });
+        const json = await res.json();
+        setStats(json.data);
+      } catch (e) {
+        console.error("Error loading stats:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, [isVisible]);
+
+  return <div ref={ref}>{/* Component content */}</div>;
+}
+```
+
+## Internationalization
+
+The component supports multiple languages through the `content.json` file:
+
+```json title="src/utils/content.json"
+{
+  "githubStats": {
+    "repos": {
+      "en": "Repositories",
+      "pt": "Repositórios"
+    },
+    "commits": {
+      "en": "Commits",
+      "pt": "Commits"
+    },
+    "prs": {
+      "en": "Pull Requests",
+      "pt": "Pull Requests"
+    },
+    "stars": {
+      "en": "Stars",
+      "pt": "Estrelas"
+    }
+  }
+}
+```
+
+## Full Component Source
+
+```typescript title="src/components/github-stats.tsx" showLineNumbers
+"use client";
+import { useEffect, useState } from "react";
+import { AnimatedNumber } from "./animated-number";
+import { cn } from "@/utils/cn";
+import { GitCommit, GitPullRequest, Star, FolderGit2 } from "lucide-react";
+import content from "@/utils/content.json";
+import { Lang } from "@/store/language-store";
+
+type Stats = {
+  totalRepos: number;
+  totalCommits: number;
+  totalPRs: number;
+  totalStars: number;
+};
+
+export function GithubStats({ lang }: { lang: Lang }) {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const statsArray = [
+    {
+      value: stats?.totalRepos ?? 0,
+      label: content.githubStats.repos[lang],
+      icon: FolderGit2,
+      color: "text-blue-400"
+    },
+    {
+      value: stats?.totalCommits ?? 0,
+      label: content.githubStats.commits[lang],
+      icon: GitCommit,
+      color: "text-emerald-400"
+    },
+    {
+      value: stats?.totalPRs ?? 0,
+      label: content.githubStats.prs[lang],
+      icon: GitPullRequest,
+      color: "text-purple-400"
+    },
+    {
+      value: stats?.totalStars ?? 0,
+      label: content.githubStats.stars[lang],
+      icon: Star,
+      color: "text-yellow-400"
+    }
+  ];
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch("/api/github", {
+          cache: "force-cache",
+          next: { revalidate: 86400 }
+        });
+        const json = await res.json();
+        setStats(json.data);
+      } catch (e) {
+        console.error("Erro ao carregar stats:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex gap-8 animate-pulse opacity-50">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-10 w-24 bg-white/5 rounded-none" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!stats) return null;
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+      {statsArray.map((stat, index) => (
+        <div key={index} className="flex items-center gap-3 group transition-all">
+          <div
+            className={cn(
+              "p-2 bg-white/5 group-hover:bg-white/10 transition-colors rounded-none",
+              stat.color
+            )}
+          >
+            <stat.icon size={18} />
+          </div>
+          <div className="flex flex-col items-start translate-y-0.5">
+            <span className="text-xl font-bold tracking-tighter tabular-nums leading-none mb-1">
+              <AnimatedNumber value={stat.value} />
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
+              {stat.label}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## Customization Options
+
+### Change Icon Set
+
+Replace Lucide icons with your preferred icon library:
+
+```tsx
+import { FaGithub, FaCodeBranch, FaGitAlt, FaStar } from "react-icons/fa";
+
+const statsArray = [
+  { icon: FaGithub, label: "Repos", ... },
+  { icon: FaGitAlt, label: "Commits", ... },
+  { icon: FaCodeBranch, label: "PRs", ... },
+  { icon: FaStar, label: "Stars", ... }
+];
+```
+
+### Custom Color Scheme
+
+Modify colors to match your brand:
+
+```tsx
+const statsArray = [
+  { color: "text-cyan-400", ... },
+  { color: "text-green-400", ... },
+  { color: "text-pink-400", ... },
+  { color: "text-amber-400", ... }
+];
+```
+
+### Add More Statistics
+
+Extend the GraphQL query to include additional metrics:
+
+```graphql
+{
+  user(login: "username") {
+    followers {
+      totalCount
+    }
+    following {
+      totalCount
+    }
+    gists {
+      totalCount
+    }
+    # ... existing queries
+  }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Component Overview" icon="boxes" href="/components/overview">
+    Explore the full component architecture
+  </Card>
+  <Card title="Animated Background" icon="sparkles" href="/components/animated-background">
+    Learn about the canvas-based animated grid
+  </Card>
+  <Card title="UI Components" icon="palette" href="/components/ui-components">
+    Browse the complete UI component library
+  </Card>
+  <Card title="GitHub GraphQL API" icon="book" href="https://docs.github.com/en/graphql">
+    Read GitHub's GraphQL API documentation
+  </Card>
+</CardGroup>

@@ -1,0 +1,407 @@
+---
+title: 'About Section'
+description: 'Personal bio, tech stack visualization, and professional journey highlights'
+icon: 'user'
+---
+
+## Overview
+
+The About component presents professional background, technical skills, work process, and key metrics. It combines a profile image, bilingual bio, tech stack badges, and animated metric cards.
+
+## Component Location
+
+```
+src/components/about.tsx
+```
+
+## Layout Structure
+
+<CardGroup cols={2}>
+  <Card title="Profile Image" icon="image">
+    High-quality profile photo with hover effects and animated badge
+  </Card>
+  <Card title="Bio & Differentiators" icon="file-text">
+    Personal story, what sets you apart, and technical approach
+  </Card>
+  <Card title="Metrics Dashboard" icon="chart-simple">
+    Key statistics about projects, architecture, and integrations
+  </Card>
+  <Card title="Work Process" icon="list-check">
+    Three-step workflow from discovery to delivery
+  </Card>
+</CardGroup>
+
+## Animation Variants
+
+The About section uses multiple Framer Motion variants:
+
+```typescript
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
+
+const stagger = {
+  visible: { transition: { staggerChildren: 0.08 } }
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" } }
+};
+```
+
+<Tip>
+The `stagger` variant creates a waterfall effect where child elements animate sequentially with a 0.08s delay.
+</Tip>
+
+## Content Configuration
+
+Content is sourced from `content.json` under the `about` key:
+
+```json
+"about": {
+  "title": { "ptBR": "Sobre mim", "en": "About me" },
+  "intro": {
+    "text1": {
+      "ptBR": "Da gastronomia para a tecnologia, levo disciplina, clareza e foco em resultado para cada projeto. Não apenas escrevo código: projeto software com decisões orientadas a dados e custo.",
+      "en": "From gastronomy to tech, I bring discipline, clarity, and outcome-focused execution to every project. I don't just write code: I design software with data- and cost-informed decisions."
+    },
+    "text2": {
+      "ptBR": "Priorizo performance, acessibilidade e DX para evoluir rápido sem perder qualidade.",
+      "en": "I prioritize performance, accessibility, and developer experience to move fast without losing quality."
+    }
+  },
+  "differentiation": {
+    "title": { "ptBR": "O que me diferencia:", "en": "What sets me apart:" },
+    "subtitle": { "ptBR": "Dados, não achismos:", "en": "Data, not guesses:" },
+    "description": {
+      "ptBR": "Decisões técnicas guiadas por benchmark, trade-offs e projeções de custo. Eu valido antes, implemento depois.",
+      "en": "Technical decisions guided by benchmarks, trade-offs, and cost projections. I validate first, then implement."
+    },
+    "items": [
+      {
+        "title": { "ptBR": "Gestão de Infra:", "en": "Infra strategy:" },
+        "description": {
+          "ptBR": "Análises comparativas para escolher o stack de deploy mais eficiente.",
+          "en": "Comparative analysis to choose the most efficient deployment stack."
+        }
+      },
+      {
+        "title": { "ptBR": "Performance:", "en": "Performance:" },
+        "description": {
+          "ptBR": "Uso de real-time quando faz sentido (ex.: WebSocket no lugar de polling).",
+          "en": "Using real-time when it makes sense (e.g., WebSocket instead of polling)."
+        }
+      },
+      {
+        "title": { "ptBR": "Arquitetura:", "en": "Architecture:" },
+        "description": {
+          "ptBR": "Monorepo com tipos compartilhados (zero drift) em Next.js + NestJS.",
+          "en": "Monorepo with shared types (zero drift) across Next.js + NestJS."
+        }
+      }
+    ]
+  }
+}
+```
+
+## Profile Image Component
+
+The profile image features sophisticated hover effects:
+
+```tsx
+const ProfileImage = () => (
+  <motion.div variants={scaleIn} className="relative w-full">
+    <div className="relative w-full max-w-sm lg:max-w-md mx-auto group">
+      <div className="relative glass-card group-hover:border-primary/40 transition-all duration-500">
+        <div className="relative w-full aspect-[4/5] min-h-[350px] overflow-hidden">
+          <Image
+            src="/profile.webp"
+            alt="Foto de perfil de Thalyson Rafael - Desenvolvedor Full Stack"
+            fill
+            quality={75}
+            priority={true}
+            className="object-cover transition-all duration-700 group-hover:scale-105 group-hover:brightness-110"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+        </div>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="absolute -bottom-5 left-1/2 -translate-x-1/2 glass-card px-5 py-2.5 flex items-center gap-2"
+      >
+        <Sparkles className="w-4 h-4 text-primary" />
+        <span className="text-sm font-semibold">Full Stack Developer</span>
+      </motion.div>
+    </div>
+  </motion.div>
+);
+```
+
+<Note>
+The image uses Next.js Image optimization with `priority={true}` for LCP (Largest Contentful Paint) optimization.
+</Note>
+
+## Tech Stack Display
+
+Tech stack is displayed as interactive badges with icons:
+
+### Tech Stack Configuration
+
+```typescript
+const TECH_STACK = content.about.techStack;
+// [
+//   { "title": "TypeScript" },
+//   { "title": "Next.js" },
+//   { "title": "Nest.js" },
+//   { "title": "PostgreSQL" },
+//   { "title": "Redis" },
+//   { "title": "Docker" }
+// ]
+```
+
+### Icon Mapping Function
+
+```typescript
+const getIconTech = (tech: string) => {
+  switch (tech) {
+    case "TypeScript":
+      return <SiTypescript className="text-blue-500" />;
+    case "Next.js":
+      return <SiNextdotjs className="text-white" />;
+    case "Nest.js":
+      return <SiNestjs className="text-red-500" />;
+    case "PostgreSQL":
+      return <SiPostgresql className="text-sky-700" />;
+    case "Redis":
+      return <SiRedis className="text-red-500" />;
+    case "Docker":
+      return <SiDocker className="text-blue-500" />;
+  }
+};
+```
+
+### Rendering
+
+```tsx
+<div className="grid grid-cols-4 lg:grid-cols-6 gap-2 mt-6">
+  {TECH_STACK.map((tech) => (
+    <Badge
+      key={tech.title}
+      variant="outline"
+      className="size-8 hover:bg-primary/10 hover:border-primary/50 transition-colors w-full"
+    >
+      <span>{getIconTech(tech.title)}</span>
+      {tech.title}
+    </Badge>
+  ))}
+</div>
+```
+
+## Metrics Dashboard
+
+Key statistics are displayed as animated cards:
+
+```typescript
+const METRICS = content.about.metrics;
+// [
+//   {
+//     "value": "5+",
+//     "label": { "ptBR": "Projetos end-to-end", "en": "End-to-end projects" }
+//   },
+//   {
+//     "value": "Real-time",
+//     "label": { "ptBR": "Arquitetura escalável", "en": "Scalable architecture" }
+//   },
+//   {
+//     "value": "UI + DX",
+//     "label": { "ptBR": "Interface performática", "en": "High-performance UI" }
+//   },
+//   {
+//     "value": "Auth + Billing",
+//     "label": { "ptBR": "Integrações seguras", "en": "Secure integrations" }
+//   }
+// ]
+```
+
+### Metric Card Component
+
+```tsx
+const MetricCard = ({ value, label }: { value: string; label: string }) => (
+  <motion.div
+    variants={fadeUp}
+    whileHover={{ y: -4, scale: 1.02 }}
+    className="bg-radial from-zinc-600/10 to-background/50 p-5 text-center group border border-transparent hover:border-primary/20"
+  >
+    <div className="flex items-center justify-center gap-2 mb-2">
+      <span className="text-2xl font-bold">{value}</span>
+    </div>
+    <p className="text-sm text-muted-foreground">{label}</p>
+  </motion.div>
+);
+```
+
+## Work Process
+
+The process is displayed as three numbered cards:
+
+```typescript
+const PROCESS_STEPS = content.about.process;
+// [
+//   {
+//     "title": { "ptBR": "Descoberta", "en": "Discovery" },
+//     "text": {
+//       "ptBR": "Entendo o problema, público e sucesso esperado.",
+//       "en": "I understand the problem, audience, and definition of success."
+//     }
+//   },
+//   {
+//     "title": { "ptBR": "Arquitetura", "en": "Architecture" },
+//     "text": {
+//       "ptBR": "Defino fluxos, modelos e integrações.",
+//       "en": "I define flows, models, and integrations."
+//     }
+//   },
+//   {
+//     "title": { "ptBR": "Entrega", "en": "Delivery" },
+//     "text": {
+//       "ptBR": "Implemento com foco em performance e acessibilidade.",
+//       "en": "I implement with performance and accessibility in mind."
+//     }
+//   }
+// ]
+```
+
+### Process Card Component
+
+```tsx
+const ProcessCard = ({ title, text, index }: { title: string; text: string; index: number }) => (
+  <motion.div
+    variants={fadeUp}
+    whileHover={{ y: -8, scale: 1.02 }}
+    className="bg-radial from-zinc-600/10 to-background/50 p-6 group border border-transparent hover:border-primary/20 relative overflow-hidden"
+  >
+    <div className="absolute -top-4 -right-4 text-6xl font-bold text-primary/5 group-hover:text-primary/15 transition-colors duration-300">
+      {String(index + 1).padStart(2, "0")}
+    </div>
+    <div className="flex items-center gap-3 mb-3 relative z-10">
+      <h3 className="font-semibold text-lg group-hover:text-primary transition-colors duration-300">
+        {title}
+      </h3>
+    </div>
+    <p className="text-sm text-muted-foreground relative z-10">{text}</p>
+  </motion.div>
+);
+```
+
+<Tip>
+The large background number uses `padStart(2, "0")` to format single digits with a leading zero (e.g., "01", "02", "03").
+</Tip>
+
+## Action Buttons
+
+CTA buttons are reused from the Hero component:
+
+```tsx
+const ActionButtons = ({ lang }: { lang: Lang }) => (
+  <div className="flex flex-wrap gap-3 pt-4">
+    {getActionButton(lang).map((button) => (
+      <Button key={button.id} asChild size="sm" variant={button.variant}>
+        {button.href ? (
+          <Link href={button.href} target={button.id === "whatsapp" ? "_blank" : undefined}>
+            <button.icon className="w-4 h-4 mr-2" />
+            {button.label}
+          </Link>
+        ) : (
+          <Link href={`#${button.targetId}`}>
+            <button.icon className="w-4 h-4 mr-2" />
+            {button.label}
+          </Link>
+        )}
+      </Button>
+    ))}
+  </div>
+);
+```
+
+## Customization Guide
+
+<Accordion title="Update Bio Content">
+  Edit `content.json` under `about.intro` and `about.differentiation`:
+  
+  ```json
+  "intro": {
+    "text1": {
+      "ptBR": "Sua biografia em português",
+      "en": "Your bio in English"
+    }
+  }
+  ```
+</Accordion>
+
+<Accordion title="Add/Remove Tech Stack Items">
+  Modify `content.json` under `about.techStack`:
+  
+  ```json
+  "techStack": [
+    { "title": "TypeScript" },
+    { "title": "React" },
+    { "title": "Your New Tech" }
+  ]
+  ```
+  
+  Then add the icon mapping in `getIconTech` function in `about.tsx:49`.
+</Accordion>
+
+<Accordion title="Change Metrics">
+  Update `content.json` under `about.metrics`:
+  
+  ```json
+  "metrics": [
+    {
+      "value": "10+",
+      "label": { "ptBR": "Anos de experiência", "en": "Years of experience" }
+    }
+  ]
+  ```
+</Accordion>
+
+<Accordion title="Modify Process Steps">
+  Edit `content.json` under `about.process`. You can add or remove steps:
+  
+  ```json
+  "process": [
+    {
+      "title": { "ptBR": "Planejamento", "en": "Planning" },
+      "text": { "ptBR": "Descrição", "en": "Description" }
+    }
+  ]
+  ```
+</Accordion>
+
+<Accordion title="Replace Profile Image">
+  Add a new image to `public/profile.webp` or update the path in `about.tsx:181`:
+  
+  ```tsx
+  <Image
+    src="/your-new-image.webp"
+    alt="Your description"
+  />
+  ```
+</Accordion>
+
+## Accessibility Features
+
+<Note>
+The About component includes:
+- Semantic HTML structure with proper headings hierarchy
+- ARIA labels for screen readers
+- Keyboard navigation for all interactive elements
+- Alt text for profile image
+- Responsive design for mobile accessibility
+</Note>

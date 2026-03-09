@@ -1,0 +1,817 @@
+---
+title: 'UI Components'
+description: 'Complete reference for UI primitive components built with Radix UI and Tailwind CSS'
+icon: 'palette'
+---
+
+## Overview
+
+The UI component library consists of accessible, customizable primitives built on [Radix UI](https://www.radix-ui.com/) and styled with Tailwind CSS. All components support the `asChild` pattern for polymorphic rendering and include full TypeScript support.
+
+## Button
+
+A versatile button component with multiple variants and sizes.
+
+### Props
+
+<ParamField path="variant" type="string" default="default">
+  Button style variant: `default` | `destructive` | `outline` | `secondary` | `ghost` | `link`
+</ParamField>
+
+<ParamField path="size" type="string" default="default">
+  Button size: `default` | `sm` | `lg` | `icon`
+</ParamField>
+
+<ParamField path="asChild" type="boolean" default="false">
+  Render as a child component (useful for links)
+</ParamField>
+
+### Usage Examples
+
+<CodeGroup>
+```tsx Basic Button
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return <Button>Click me</Button>;
+}
+```
+
+```tsx Button Variants
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return (
+    <div className="flex gap-2">
+      <Button variant="default">Default</Button>
+      <Button variant="destructive">Destructive</Button>
+      <Button variant="outline">Outline</Button>
+      <Button variant="secondary">Secondary</Button>
+      <Button variant="ghost">Ghost</Button>
+      <Button variant="link">Link</Button>
+    </div>
+  );
+}
+```
+
+```tsx Button as Link
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
+export function Example() {
+  return (
+    <Button asChild>
+      <Link href="/features/projects-showcase">View Projects</Link>
+    </Button>
+  );
+}
+```
+
+```tsx Icon Button
+import { Button } from "@/components/ui/button";
+import { GitHubIcon } from "lucide-react";
+
+export function Example() {
+  return (
+    <Button size="icon">
+      <GitHubIcon />
+    </Button>
+  );
+}
+```
+</CodeGroup>
+
+### Implementation
+
+```typescript title="src/components/ui/button.tsx"
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        destructive: "bg-destructive text-white shadow-xs hover:bg-destructive/90",
+        outline: "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline"
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9"
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default"
+    }
+  }
+);
+```
+
+---
+
+## Card
+
+A flexible card component with compound components for header, content, and footer.
+
+### Components
+
+- `Card`: Root container
+- `CardHeader`: Header section with title and description
+- `CardTitle`: Card title
+- `CardDescription`: Card description
+- `CardAction`: Action area in header (positioned in top-right)
+- `CardContent`: Main content area
+- `CardFooter`: Footer section
+
+### Usage Examples
+
+<CodeGroup>
+```tsx Basic Card
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Project Title</CardTitle>
+        <CardDescription>A brief description of the project</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p>Main content goes here...</p>
+      </CardContent>
+      <CardFooter>
+        <Button>View Details</Button>
+      </CardFooter>
+    </Card>
+  );
+}
+```
+
+```tsx Card with Action
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardAction
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Settings</CardTitle>
+        <CardDescription>Manage your account settings</CardDescription>
+        <CardAction>
+          <Button variant="outline" size="sm">Edit</Button>
+        </CardAction>
+      </CardHeader>
+    </Card>
+  );
+}
+```
+
+```tsx Project Card (Real Example)
+import { Card, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Eye, Github } from "lucide-react";
+
+export function ProjectCard() {
+  return (
+    <Card className="h-full p-0 relative bg-zinc-950/20 hover:bg-zinc-900/60 transition-all duration-300 border border-white/5 overflow-hidden flex flex-col">
+      <div className="relative aspect-video overflow-hidden border-b border-white/5">
+        {/* Image carousel */}
+      </div>
+      <div className="p-5 flex flex-col flex-1 space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-xl font-bold leading-tight group-hover:text-primary transition-colors">
+            My Project
+          </CardTitle>
+          <Badge variant="secondary">Featured</Badge>
+        </div>
+        <CardDescription className="text-sm leading-relaxed text-muted-foreground line-clamp-2">
+          A full-stack web application built with Next.js and TypeScript
+        </CardDescription>
+        <div className="flex flex-wrap gap-1.5">
+          <Badge variant="secondary">React</Badge>
+          <Badge variant="secondary">TypeScript</Badge>
+          <Badge variant="secondary">Tailwind</Badge>
+        </div>
+        <div className="pt-4 mt-auto flex flex-wrap gap-2">
+          <Button size="sm" variant="default">
+            <Eye size={14} />
+            Live Demo
+          </Button>
+          <Button size="sm" variant="outline">
+            <Github size={14} />
+            Source Code
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Badge
+
+Compact labels for tags, status indicators, and metadata.
+
+### Props
+
+<ParamField path="variant" type="string" default="default">
+  Badge style: `default` | `secondary` | `destructive` | `outline`
+</ParamField>
+
+<ParamField path="asChild" type="boolean" default="false">
+  Render as a child component
+</ParamField>
+
+### Usage Examples
+
+<CodeGroup>
+```tsx Basic Badges
+import { Badge } from "@/components/ui/badge";
+
+export function Example() {
+  return (
+    <div className="flex gap-2">
+      <Badge>Default</Badge>
+      <Badge variant="secondary">Secondary</Badge>
+      <Badge variant="destructive">Error</Badge>
+      <Badge variant="outline">Outline</Badge>
+    </div>
+  );
+}
+```
+
+```tsx Technology Tags
+import { Badge } from "@/components/ui/badge";
+
+export function TechStack() {
+  const technologies = ["React", "TypeScript", "Next.js", "Tailwind CSS", "Framer Motion"];
+  
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {technologies.map((tech) => (
+        <Badge key={tech} variant="secondary" className="bg-white/5 text-zinc-400">
+          {tech}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Dialog
+
+Accessible modal dialog component with overlay.
+
+### Components
+
+- `Dialog`: Root component
+- `DialogTrigger`: Button to open dialog
+- `DialogContent`: Dialog content container
+- `DialogHeader`: Header section
+- `DialogTitle`: Dialog title
+- `DialogDescription`: Dialog description
+- `DialogFooter`: Footer section
+- `DialogClose`: Close button
+
+### Props
+
+<ParamField path="showCloseButton" type="boolean" default="true">
+  Show the close button in the top-right corner
+</ParamField>
+
+### Usage Examples
+
+<CodeGroup>
+```tsx Basic Dialog
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>Open Dialog</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Are you sure?</DialogTitle>
+          <DialogDescription>
+            This action cannot be undone. This will permanently delete your account.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline">Cancel</Button>
+          <Button variant="destructive">Delete Account</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Form
+
+Integrated form components with React Hook Form validation.
+
+### Components
+
+- `Form`: Root form provider (wraps React Hook Form's `FormProvider`)
+- `FormField`: Field wrapper with Controller
+- `FormItem`: Field container
+- `FormLabel`: Field label
+- `FormControl`: Input control wrapper
+- `FormDescription`: Help text
+- `FormMessage`: Error message
+
+### Usage Examples
+
+<CodeGroup>
+```tsx Complete Form Example
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+const formSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  name: z.string().min(2, "Name must be at least 2 characters")
+});
+
+export function ContactForm() {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      name: ""
+    }
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log(values);
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="John Doe" {...field} />
+              </FormControl>
+              <FormDescription>
+                Your full name as it appears on official documents.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="john@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Submit</Button>
+      </form>
+    </Form>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Input
+
+Text input field with consistent styling.
+
+### Usage Examples
+
+<CodeGroup>
+```tsx Basic Input
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export function Example() {
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor="email">Email</Label>
+      <Input id="email" type="email" placeholder="you@example.com" />
+    </div>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Label
+
+Accessible form label component.
+
+### Usage
+
+```tsx
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+export function Example() {
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor="username">Username</Label>
+      <Input id="username" placeholder="@username" />
+    </div>
+  );
+}
+```
+
+---
+
+## Select
+
+Dropdown select component with custom styling.
+
+### Components
+
+- `Select`: Root component
+- `SelectTrigger`: Button to open dropdown
+- `SelectValue`: Selected value display
+- `SelectContent`: Dropdown content
+- `SelectItem`: Individual option
+- `SelectGroup`: Group options
+- `SelectLabel`: Group label
+- `SelectSeparator`: Visual separator
+
+### Props
+
+<ParamField path="size" type="string" default="default">
+  Trigger size: `default` | `sm`
+</ParamField>
+
+<ParamField path="chevron" type="boolean" default="true">
+  Show chevron icon in trigger
+</ParamField>
+
+### Usage Examples
+
+<CodeGroup>
+```tsx Basic Select
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+
+export function Example() {
+  return (
+    <Select>
+      <SelectTrigger>
+        <SelectValue placeholder="Select a theme" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="light">Light</SelectItem>
+        <SelectItem value="dark">Dark</SelectItem>
+        <SelectItem value="system">System</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+```
+
+```tsx Grouped Select
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+
+export function Example() {
+  return (
+    <Select>
+      <SelectTrigger>
+        <SelectValue placeholder="Select a fruit" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Fruits</SelectLabel>
+          <SelectItem value="apple">Apple</SelectItem>
+          <SelectItem value="banana">Banana</SelectItem>
+        </SelectGroup>
+        <SelectSeparator />
+        <SelectGroup>
+          <SelectLabel>Vegetables</SelectLabel>
+          <SelectItem value="carrot">Carrot</SelectItem>
+          <SelectItem value="potato">Potato</SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Sheet
+
+Slide-out panel component (mobile drawer/sidebar).
+
+### Components
+
+- `Sheet`: Root component
+- `SheetTrigger`: Button to open sheet
+- `SheetContent`: Sheet content container
+- `SheetHeader`: Header section
+- `SheetTitle`: Sheet title
+- `SheetDescription`: Sheet description
+- `SheetFooter`: Footer section
+- `SheetClose`: Close button
+
+### Props
+
+<ParamField path="side" type="string" default="right">
+  Sheet position: `top` | `right` | `bottom` | `left`
+</ParamField>
+
+### Usage Examples
+
+<CodeGroup>
+```tsx Basic Sheet
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="outline">Open Menu</Button>
+      </SheetTrigger>
+      <SheetContent side="right">
+        <SheetHeader>
+          <SheetTitle>Menu</SheetTitle>
+          <SheetDescription>
+            Navigate through the application
+          </SheetDescription>
+        </SheetHeader>
+        <div className="py-4">
+          {/* Navigation items */}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Textarea
+
+Multi-line text input component.
+
+### Usage
+
+```tsx
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+
+export function Example() {
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor="message">Message</Label>
+      <Textarea id="message" placeholder="Type your message here..." />
+    </div>
+  );
+}
+```
+
+---
+
+## Dropdown Menu
+
+Context menu and dropdown component.
+
+### Components
+
+- `DropdownMenu`: Root component
+- `DropdownMenuTrigger`: Button to open menu
+- `DropdownMenuContent`: Menu content container
+- `DropdownMenuItem`: Individual menu item
+- `DropdownMenuCheckboxItem`: Checkbox item
+- `DropdownMenuRadioGroup`: Radio group
+- `DropdownMenuRadioItem`: Radio item
+- `DropdownMenuLabel`: Section label
+- `DropdownMenuSeparator`: Visual separator
+- `DropdownMenuShortcut`: Keyboard shortcut display
+- `DropdownMenuSub`: Submenu container
+- `DropdownMenuSubTrigger`: Submenu trigger
+- `DropdownMenuSubContent`: Submenu content
+
+### Usage Examples
+
+<CodeGroup>
+```tsx Basic Dropdown
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Open Menu</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>Profile</DropdownMenuItem>
+        <DropdownMenuItem>Settings</DropdownMenuItem>
+        <DropdownMenuItem>Logout</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+```
+
+```tsx Advanced Dropdown
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
+export function Example() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline">Actions</Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          Edit
+          <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          Duplicate
+          <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive">
+          Delete
+          <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+```
+</CodeGroup>
+
+---
+
+## Styling and Theming
+
+All components respect the global theme configuration defined in your Tailwind config:
+
+```css title="globals.css"
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    /* ... more CSS variables */
+  }
+}
+```
+
+### Custom Styling
+
+All components accept a `className` prop for custom styling:
+
+```tsx
+<Button className="bg-gradient-to-r from-purple-500 to-pink-500">
+  Custom Gradient Button
+</Button>
+```
+
+<Tip>
+Use the `cn()` utility when combining multiple class names to avoid style conflicts:
+
+```tsx
+import { cn } from "@/utils/cn";
+
+<Button className={cn("custom-class", condition && "conditional-class")}>
+  Button
+</Button>
+```
+</Tip>
+
+## Accessibility Features
+
+All components include built-in accessibility features:
+
+- **Keyboard Navigation**: Full keyboard support for all interactive components
+- **ARIA Attributes**: Proper ARIA labels, roles, and states
+- **Focus Management**: Visible focus indicators and focus trapping in modals
+- **Screen Reader Support**: Descriptive labels and announcements
+
+<Note>
+All Radix UI primitives are tested against the [WAI-ARIA](https://www.w3.org/WAI/ARIA/apg/) authoring practices.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Animated Background" icon="sparkles" href="/components/animated-background">
+    Learn about the canvas-based animated grid component
+  </Card>
+  <Card title="GitHub Stats" icon="github" href="/components/github-stats">
+    Explore the GitHub statistics integration
+  </Card>
+</CardGroup>

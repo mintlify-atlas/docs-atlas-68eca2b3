@@ -1,0 +1,733 @@
+---
+title: 'State Management'
+description: 'Complete guide to Zustand implementation, language store, and state management best practices'
+---
+
+## Overview
+
+This portfolio uses **Zustand** for client-side state management. Zustand is a small, fast, and scalable state management solution that works seamlessly with React 19 and Next.js 16 Server Components.
+
+<Note>
+**Why Zustand?** It provides a simple API with minimal boilerplate, no Context providers needed, and excellent TypeScript support—perfect for managing client preferences and UI state.
+</Note>
+
+## Installation
+
+Zustand is already installed in the project:
+
+```bash
+npm install zustand
+```
+
+## Current Implementation
+
+### Language Store
+
+The portfolio implements a language preference store that persists user's language choice (Portuguese or English) to localStorage.
+
+<CodeGroup>
+```typescript src/store/language-store.ts
+"use client";
+
+import { create } from "zustand";
+
+export type Lang = "ptBR" | "en";
+
+type LanguageState = {
+  lang: Lang;
+  hydrated: boolean;
+  hydrate: () => void;
+  setLang: (lang: Lang) => void;
+};
+
+const KEY = "portfolio-language";
+
+export const useLanguageStore = create<LanguageState>((set, get) => ({
+  lang: "ptBR",
+  hydrated: false,
+
+  hydrate: () => {
+    if (get().hydrated) return;
+    const stored = (localStorage.getItem(KEY) as Lang | null) ?? "ptBR";
+    set({ lang: stored, hydrated: true });
+  },
+
+  setLang: (lang) => {
+    localStorage.setItem(KEY, lang);
+    set({ lang });
+  }
+}));
+```
+</CodeGroup>
+
+**File Location:** `src/store/language-store.ts`
+
+### Store Architecture Breakdown
+
+<Steps>
+  <Step title="Type Definitions">
+    ```typescript
+    export type Lang = "ptBR" | "en";
+    
+    type LanguageState = {
+      lang: Lang;           // Current language
+      hydrated: boolean;    // Whether state is loaded from localStorage
+      hydrate: () => void;  // Load from localStorage
+      setLang: (lang: Lang) => void;  // Update language
+    };
+    ```
+    
+    - `Lang`: Type-safe language options
+    - `LanguageState`: Complete store shape with actions
+    - `hydrated`: Prevents hydration mismatches in SSR
+  </Step>
+
+  <Step title="Store Creation">
+    ```typescript
+    export const useLanguageStore = create<LanguageState>((set, get) => ({
+      // Initial state
+      lang: "ptBR",
+      hydrated: false,
+      
+      // Actions
+      hydrate: () => { /* ... */ },
+      setLang: (lang) => { /* ... */ }
+    }));
+    ```
+    
+    - `create()`: Zustand store factory
+    - `set()`: Update state immutably
+    - `get()`: Access current state
+    - Type parameter ensures full type safety
+  </Step>
+
+  <Step title="Hydration Pattern">
+    ```typescript
+    hydrate: () => {
+      if (get().hydrated) return;  // Only hydrate once
+      const stored = (localStorage.getItem(KEY) as Lang | null) ?? "ptBR";
+      set({ lang: stored, hydrated: true });
+    }
+    ```
+    
+    **Why Hydration?**
+    - Next.js renders on server (no localStorage access)
+    - Client needs to sync with persisted state
+    - Prevents hydration mismatch errors
+    - Called once on client mount
+  </Step>
+
+  <Step title="Persistence">
+    ```typescript
+    setLang: (lang) => {
+      localStorage.setItem(KEY, lang);  // Persist first
+      set({ lang });                     // Then update state
+    }
+    ```
+    
+    - Updates localStorage synchronously
+    - Triggers re-render with new state
+    - Survives page refreshes
+  </Step>
+</Steps>
+
+## Usage in Components
+
+### Hydration Hook
+
+To prevent hydration mismatches, we use a custom hook to initialize the store on the client:
+
+<CodeGroup>
+```typescript src/app/hooks/use-language-hydrate.ts
+"use client";
+
+import { useLanguageStore } from "@/store/language-store";
+import { useEffect } from "react";
+
+export function useLanguageHydrate() {
+  const hydrate = useLanguageStore((s) => s.hydrate);
+  useEffect(() => hydrate(), [hydrate]);
+}
+```
+</CodeGroup>
+
+**How It Works:**
+1. Extracts `hydrate` function from store
+2. Runs on client mount (useEffect)
+3. Loads language from localStorage
+4. Sets `hydrated: true` to prevent re-hydration
+
+### Reading State
+
+<CodeGroup>
+```typescript Component Reading Language
+"use client";
+
+import { useLanguageStore } from "@/store/language-store";
+import { useLanguageHydrate } from "@/app/hooks/use-language-hydrate";
+
+export function MyComponent() {
+  // Initialize store on mount
+  useLanguageHydrate();
+  
+  // Read current language
+  const lang = useLanguageStore((state) => state.lang);
+  
+  return <div>{lang === "en" ? "Hello" : "Olá"}</div>;
+}
+```
+
+```typescript Selecting Multiple Values
+"use client";
+
+import { useLanguageStore } from "@/store/language-store";
+
+export function LanguageInfo() {
+  const { lang, hydrated } = useLanguageStore((state) => ({
+    lang: state.lang,
+    hydrated: state.hydrated
+  }));
+  
+  if (!hydrated) return <div>Loading...</div>;
+  
+  return <div>Language: {lang}</div>;
+}
+```
+</CodeGroup>
+
+<Tip>
+**Selector Pattern:** Only subscribe to the parts of state you need. This prevents unnecessary re-renders when other parts of the store update.
+</Tip>
+
+### Updating State
+
+<CodeGroup>
+```typescript src/components/select-language.tsx
+"use client";
+
+import { useLanguageStore } from "@/store/language-store";
+
+export function SelectLanguage() {
+  const { lang, setLang } = useLanguageStore((state) => ({
+    lang: state.lang,
+    setLang: state.setLang
+  }));
+
+  return (
+    <div>
+      <button 
+        onClick={() => setLang("en")}
+        className={lang === "en" ? "active" : ""}
+      >
+        English
+      </button>
+      <button 
+        onClick={() => setLang("ptBR")}
+        className={lang === "ptBR" ? "active" : ""}
+      >
+        Português
+      </button>
+    </div>
+  );
+}
+```
+</CodeGroup>
+
+**Flow:**
+1. User clicks button
+2. `setLang("en")` is called
+3. Language saved to localStorage
+4. State updated in Zustand store
+5. All subscribed components re-render
+
+## Translation Helper
+
+The language store integrates with a simple translation utility:
+
+<CodeGroup>
+```typescript src/utils/i18n.ts
+type Lang = "ptBR" | "en";
+type I18nText = string | { ptBR: string; en: string };
+
+export function translate(value: I18nText, lang: Lang) {
+  if (typeof value === "string") return value;
+  return value[lang] ?? value.ptBR;
+}
+```
+
+```typescript Usage in Components
+import { useLanguageStore } from "@/store/language-store";
+import { translate } from "@/utils/i18n";
+import content from "@/utils/content.json";
+
+export function Hero() {
+  const lang = useLanguageStore((s) => s.lang);
+  
+  return (
+    <h1>{translate(content.hero.title, lang)}</h1>
+  );
+}
+```
+</CodeGroup>
+
+## Creating New Stores
+
+### Template for New Store
+
+<CodeGroup>
+```typescript src/store/theme-store.ts
+"use client";
+
+import { create } from "zustand";
+
+type Theme = "light" | "dark" | "system";
+
+type ThemeState = {
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+};
+
+export const useThemeStore = create<ThemeState>((set) => ({
+  theme: "system",
+  
+  setTheme: (theme) => {
+    localStorage.setItem("theme", theme);
+    set({ theme });
+    // Apply theme to document
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }
+}));
+```
+
+```typescript src/store/ui-store.ts
+"use client";
+
+import { create } from "zustand";
+
+type UIState = {
+  sidebarOpen: boolean;
+  modalOpen: boolean;
+  toggleSidebar: () => void;
+  openModal: () => void;
+  closeModal: () => void;
+};
+
+export const useUIStore = create<UIState>((set) => ({
+  sidebarOpen: false,
+  modalOpen: false,
+  
+  toggleSidebar: () => set((state) => ({ 
+    sidebarOpen: !state.sidebarOpen 
+  })),
+  
+  openModal: () => set({ modalOpen: true }),
+  closeModal: () => set({ modalOpen: false })
+}));
+```
+</CodeGroup>
+
+### Store Best Practices
+
+<Steps>
+  <Step title="1. TypeScript First">
+    Always define types for state and actions:
+    ```typescript
+    type MyState = {
+      value: string;
+      updateValue: (value: string) => void;
+    };
+    
+    export const useMyStore = create<MyState>((set) => ({ ... }));
+    ```
+  </Step>
+
+  <Step title="2. Client-Only Directive">
+    Always add `"use client"` at the top of store files:
+    ```typescript
+    "use client";
+    import { create } from "zustand";
+    ```
+  </Step>
+
+  <Step title="3. Single Responsibility">
+    Each store should manage one domain:
+    - ✅ `useLanguageStore` - Language preferences
+    - ✅ `useThemeStore` - Theme settings
+    - ✅ `useUIStore` - UI state (modals, sidebars)
+    - ❌ `useAppStore` - Everything (too broad)
+  </Step>
+
+  <Step title="4. Immutable Updates">
+    Use `set()` with object spreading:
+    ```typescript
+    // ✅ Good
+    set((state) => ({ count: state.count + 1 }))
+    
+    // ❌ Bad (mutates state)
+    set((state) => {
+      state.count++;
+      return state;
+    })
+    ```
+  </Step>
+
+  <Step title="5. Selective Subscriptions">
+    Subscribe to only what you need:
+    ```typescript
+    // ✅ Good - only re-renders when lang changes
+    const lang = useLanguageStore((s) => s.lang);
+    
+    // ❌ Bad - re-renders on any state change
+    const store = useLanguageStore();
+    const lang = store.lang;
+    ```
+  </Step>
+</Steps>
+
+## Advanced Patterns
+
+### Middleware: Persist
+
+Zustand supports middleware for advanced features:
+
+<CodeGroup>
+```typescript With Persist Middleware
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+
+type LanguageState = {
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+};
+
+export const useLanguageStore = create<LanguageState>()(
+  persist(
+    (set) => ({
+      lang: "ptBR",
+      setLang: (lang) => set({ lang })
+    }),
+    {
+      name: "portfolio-language",  // localStorage key
+      storage: createJSONStorage(() => localStorage)
+    }
+  )
+);
+```
+</CodeGroup>
+
+<Note>
+The current implementation uses manual localStorage for more control, but the persist middleware is a good alternative for simpler cases.
+</Note>
+
+### Computed Values with Selectors
+
+<CodeGroup>
+```typescript Store with Computed Values
+import { create } from "zustand";
+
+type CartState = {
+  items: Array<{ id: string; price: number; quantity: number }>;
+  addItem: (item: CartState["items"][0]) => void;
+};
+
+export const useCartStore = create<CartState>((set) => ({
+  items: [],
+  addItem: (item) => set((state) => ({ 
+    items: [...state.items, item] 
+  }))
+}));
+
+// Computed selector (memoized)
+export const selectTotal = (state: CartState) =>
+  state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+// Usage
+const total = useCartStore(selectTotal);
+```
+</CodeGroup>
+
+### Async Actions
+
+<CodeGroup>
+```typescript Store with Async Actions
+import { create } from "zustand";
+
+type UserState = {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  fetchUser: (id: string) => Promise<void>;
+};
+
+export const useUserStore = create<UserState>((set) => ({
+  user: null,
+  loading: false,
+  error: null,
+  
+  fetchUser: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`/api/users/${id}`);
+      const user = await response.json();
+      set({ user, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+    }
+  }
+}));
+```
+</CodeGroup>
+
+## When to Use State vs Props vs Context
+
+<Accordion title="Decision Matrix">
+**Use Zustand State When:**
+- ✅ Global client state (theme, language, user preferences)
+- ✅ Shared across many components
+- ✅ Needs persistence (localStorage)
+- ✅ Frequent updates from many places
+- ✅ Complex state logic
+
+**Use Props When:**
+- ✅ Parent-to-child data flow
+- ✅ Component-specific data
+- ✅ Single source of truth in parent
+- ✅ Server Component data (Next.js)
+
+**Use React Context When:**
+- ✅ Deeply nested component trees (theme provider)
+- ✅ Rarely changing data
+- ✅ Dependency injection pattern
+- ❌ Frequently updating data (use Zustand instead)
+
+**Use Server State Libraries (SWR/React Query) When:**
+- ✅ Fetching data from APIs
+- ✅ Need caching, revalidation, optimistic updates
+- ✅ Synchronizing server state
+- ❌ Currently not needed in this portfolio (static content)
+</Accordion>
+
+## Performance Considerations
+
+### Re-render Optimization
+
+<CodeGroup>
+```typescript Optimized Selectors
+// ✅ Good - Only re-renders when lang changes
+const lang = useLanguageStore((s) => s.lang);
+
+// ✅ Good - Only re-renders when setLang reference changes (never)
+const setLang = useLanguageStore((s) => s.setLang);
+
+// ❌ Bad - Re-renders on any state change
+const { lang, hydrated, setLang } = useLanguageStore();
+
+// ✅ Better - Use shallow comparison
+import { shallow } from "zustand/shallow";
+const { lang, hydrated } = useLanguageStore(
+  (s) => ({ lang: s.lang, hydrated: s.hydrated }),
+  shallow
+);
+```
+</CodeGroup>
+
+### DevTools Integration
+
+<CodeGroup>
+```typescript With Redux DevTools
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+
+export const useLanguageStore = create<LanguageState>()(
+  devtools(
+    (set) => ({
+      lang: "ptBR",
+      setLang: (lang) => set({ lang }, false, "setLang")
+    }),
+    { name: "LanguageStore" }
+  )
+);
+```
+</CodeGroup>
+
+<Tip>
+Install Redux DevTools browser extension to inspect Zustand state changes in development.
+</Tip>
+
+## Testing Stores
+
+<CodeGroup>
+```typescript __tests__/language-store.test.ts
+import { renderHook, act } from "@testing-library/react";
+import { useLanguageStore } from "@/store/language-store";
+
+describe("useLanguageStore", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("should initialize with default language", () => {
+    const { result } = renderHook(() => useLanguageStore());
+    expect(result.current.lang).toBe("ptBR");
+  });
+
+  it("should update language and persist to localStorage", () => {
+    const { result } = renderHook(() => useLanguageStore());
+    
+    act(() => {
+      result.current.setLang("en");
+    });
+    
+    expect(result.current.lang).toBe("en");
+    expect(localStorage.getItem("portfolio-language")).toBe("en");
+  });
+
+  it("should hydrate from localStorage", () => {
+    localStorage.setItem("portfolio-language", "en");
+    
+    const { result } = renderHook(() => useLanguageStore());
+    
+    act(() => {
+      result.current.hydrate();
+    });
+    
+    expect(result.current.lang).toBe("en");
+    expect(result.current.hydrated).toBe(true);
+  });
+});
+```
+</CodeGroup>
+
+## Migration from Context API
+
+If you're converting from React Context to Zustand:
+
+<CodeGroup>
+```typescript Before (Context API)
+// ❌ Old way with Context
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [lang, setLang] = useState<Lang>("ptBR");
+  
+  return (
+    <LanguageContext.Provider value={{ lang, setLang }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error("Must be used within LanguageProvider");
+  return context;
+}
+```
+
+```typescript After (Zustand)
+// ✅ New way with Zustand
+import { create } from "zustand";
+
+export const useLanguageStore = create<LanguageState>((set) => ({
+  lang: "ptBR",
+  setLang: (lang) => set({ lang })
+}));
+
+// No provider needed!
+// No context boilerplate!
+// Use directly in components:
+const lang = useLanguageStore((s) => s.lang);
+```
+</CodeGroup>
+
+<Warning>
+**Benefits of Migration:**
+- ✅ No Provider wrapper needed
+- ✅ Better performance (no Context re-render issues)
+- ✅ Less boilerplate
+- ✅ Easier testing
+- ✅ Built-in TypeScript support
+</Warning>
+
+## Debugging Tips
+
+<Steps>
+  <Step title="Log State Changes">
+    ```typescript
+    export const useLanguageStore = create<LanguageState>((set) => ({
+      lang: "ptBR",
+      setLang: (lang) => {
+        console.log("Language changing to:", lang);
+        set({ lang });
+      }
+    }));
+    ```
+  </Step>
+
+  <Step title="Use Redux DevTools">
+    Add devtools middleware and inspect state in browser:
+    ```typescript
+    import { devtools } from "zustand/middleware";
+    
+    export const useLanguageStore = create<LanguageState>()(
+      devtools((set) => ({ ... }))
+    );
+    ```
+  </Step>
+
+  <Step title="Check localStorage">
+    Open browser console:
+    ```javascript
+    localStorage.getItem("portfolio-language");
+    ```
+  </Step>
+
+  <Step title="Hydration Check">
+    Add logging to hydration hook:
+    ```typescript
+    export function useLanguageHydrate() {
+      const hydrate = useLanguageStore((s) => s.hydrate);
+      useEffect(() => {
+        console.log("Hydrating language store");
+        hydrate();
+      }, [hydrate]);
+    }
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Quick Reference
+
+### Store File Location
+```
+src/store/language-store.ts
+```
+
+### Usage Pattern
+```typescript
+// 1. Import store
+import { useLanguageStore } from "@/store/language-store";
+
+// 2. Hydrate on mount (in root component)
+import { useLanguageHydrate } from "@/app/hooks/use-language-hydrate";
+useLanguageHydrate();
+
+// 3. Read state
+const lang = useLanguageStore((s) => s.lang);
+
+// 4. Update state
+const setLang = useLanguageStore((s) => s.setLang);
+setLang("en");
+```
+
+### Store Architecture
+- **State**: `lang`, `hydrated`
+- **Actions**: `hydrate()`, `setLang()`
+- **Persistence**: localStorage
+- **Hydration**: Client-side only
+
+<Tip>
+See [Tech Stack](/development/tech-stack) for Zustand version details and [Project Structure](/development/project-structure) for file organization.
+</Tip>

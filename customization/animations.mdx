@@ -1,0 +1,857 @@
+---
+title: 'Animation System'
+description: 'Implement smooth animations with Framer Motion and performance optimizations'
+icon: 'wand-magic-sparkles'
+---
+
+## Overview
+
+Thalyson's Portfolio uses **Framer Motion** (v12.17.0) to create smooth, performant animations throughout the interface. The animation system includes:
+
+- **Page entrance animations** with stagger effects
+- **Scroll-triggered animations** via `whileInView`
+- **Hover and interaction animations** for enhanced UX
+- **Spring physics** for natural motion
+- **Performance optimizations** with `will-change` and reduced motion support
+
+<Note>
+All animated components are client components (`"use client"`) since Framer Motion requires browser APIs.
+</Note>
+
+---
+
+## Installation
+
+```json package.json
+{
+  "dependencies": {
+    "framer-motion": "^12.17.0"
+  }
+}
+```
+
+**Import in components:**
+
+```tsx
+import { motion } from "framer-motion";
+```
+
+---
+
+## Core Animation Patterns
+
+### 1. Container + Item Stagger
+
+The most common pattern: parent container staggers child animations.
+
+<CodeGroup>
+
+```tsx Hero Component (src/components/hero.tsx)
+"use client";
+import { motion } from "framer-motion";
+
+const ANIMATION_CONFIG = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,    // 200ms delay between children
+        delayChildren: 0.1       // Start after 100ms
+      }
+    }
+  },
+  item: {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 20,               // Less bouncy
+        stiffness: 100,            // Spring speed
+        duration: 0.8
+      }
+    }
+  }
+};
+
+export function Hero() {
+  return (
+    <motion.div
+      variants={ANIMATION_CONFIG.container}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.h1 variants={ANIMATION_CONFIG.item}>
+        Title
+      </motion.h1>
+      <motion.p variants={ANIMATION_CONFIG.item}>
+        Description
+      </motion.p>
+      <motion.button variants={ANIMATION_CONFIG.item}>
+        CTA
+      </motion.button>
+    </motion.div>
+  );
+}
+```
+
+```tsx About Component (src/components/about.tsx)
+const stagger = {
+  visible: { transition: { staggerChildren: 0.08 } }
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.5, ease: "easeOut" } 
+  }
+};
+
+<motion.div
+  initial="hidden"
+  whileInView="visible"
+  viewport={{ once: true, margin: "-100px" }}
+  variants={stagger}
+>
+  <motion.div variants={fadeUp}>Content 1</motion.div>
+  <motion.div variants={fadeUp}>Content 2</motion.div>
+</motion.div>
+```
+
+</CodeGroup>
+
+**Key properties:**
+- `staggerChildren`: Delay between each child animation (in seconds)
+- `delayChildren`: Initial delay before children start animating
+- `variants`: Reusable animation states shared between parent and children
+
+---
+
+### 2. Scroll-Triggered Animations
+
+Animate elements when they enter the viewport using `whileInView`:
+
+```tsx src/components/about.tsx
+<motion.div
+  initial="hidden"
+  whileInView="visible"
+  viewport={{ 
+    once: true,        // Animate only once (don't re-trigger)
+    margin: "-100px"   // Trigger 100px before element enters viewport
+  }}
+  variants={fadeUp}
+>
+  Content animates when scrolled into view
+</motion.div>
+```
+
+**Viewport options:**
+- `once: true` - Prevents re-animation on every scroll
+- `margin: "-100px"` - Adjusts trigger point (negative = earlier, positive = later)
+- `amount: 0.5` - Trigger when 50% of element is visible
+
+---
+
+### 3. Hover Animations
+
+Interactive hover effects for cards and buttons:
+
+```tsx src/components/about.tsx
+<motion.div
+  variants={fadeUp}
+  whileHover={{ 
+    y: -4,           // Lift 4px
+    scale: 1.02      // Slight scale increase
+  }}
+  className="bg-card p-6 cursor-pointer"
+>
+  Hover me!
+</motion.div>
+```
+
+**Common hover patterns:**
+
+<CodeGroup>
+
+```tsx Lift Effect
+<motion.div whileHover={{ y: -8, scale: 1.02 }}>
+  Card
+</motion.div>
+```
+
+```tsx Scale Effect
+<motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+  Button
+</motion.button>
+```
+
+```tsx Rotate Effect
+<motion.div whileHover={{ rotate: 5, scale: 1.1 }}>
+  Icon
+</motion.div>
+```
+
+</CodeGroup>
+
+---
+
+### 4. Spring Physics
+
+Spring animations create natural, physics-based motion:
+
+```tsx
+const springConfig = {
+  type: "spring",
+  damping: 20,      // Higher = less bouncy (0-100)
+  stiffness: 100,   // Higher = faster (0-500)
+  mass: 1           // Higher = heavier, slower (default: 1)
+};
+
+<motion.div
+  initial={{ scale: 0 }}
+  animate={{ scale: 1 }}
+  transition={springConfig}
+>
+  Bouncy element
+</motion.div>
+```
+
+**Spring parameters:**
+- **damping**: Controls bounciness (20-30 for subtle, 10 for bouncy)
+- **stiffness**: Controls speed (100 for smooth, 300 for snappy)
+- **mass**: Controls inertia (rarely needs adjustment)
+
+---
+
+### 5. Title Scale Animation
+
+Special effect for hero titles:
+
+```tsx src/components/hero.tsx
+const title = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      damping: 15,
+      stiffness: 100,
+      duration: 1
+    }
+  }
+};
+
+<motion.h1 variants={title}>
+  Scaling Title
+</motion.h1>
+```
+
+---
+
+## Animation Recipes
+
+### Fade Up (Most Common)
+
+```tsx
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.5, ease: "easeOut" } 
+  }
+};
+```
+
+**Use for:** Text blocks, cards, sections
+
+---
+
+### Fade In (Simple)
+
+```tsx
+const fadeIn = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1, 
+    transition: { duration: 0.4 } 
+  }
+};
+```
+
+**Use for:** Images, overlays, backgrounds
+
+---
+
+### Scale In
+
+```tsx
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { 
+    opacity: 1, 
+    scale: 1, 
+    transition: { duration: 0.5, ease: "easeOut" } 
+  }
+};
+```
+
+**Use for:** Modal dialogs, profile images, featured content
+
+---
+
+### Slide In (Horizontal)
+
+```tsx
+const slideInLeft = {
+  hidden: { opacity: 0, x: -50 },
+  visible: { 
+    opacity: 1, 
+    x: 0, 
+    transition: { type: "spring", damping: 20, stiffness: 100 } 
+  }
+};
+```
+
+**Use for:** Sidebar navigation, slide-out panels
+
+---
+
+### Stagger List Items
+
+```tsx
+const list = {
+  visible: { transition: { staggerChildren: 0.1 } }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0 }
+};
+
+<motion.ul variants={list} initial="hidden" animate="visible">
+  {items.map(item => (
+    <motion.li key={item.id} variants={item}>
+      {item.text}
+    </motion.li>
+  ))}
+</motion.ul>
+```
+
+---
+
+## CSS Animations (Non-Framer)
+
+Some animations use pure CSS for better performance:
+
+### Gradient Animation
+
+```css src/app/globals.css
+@layer utilities {
+  .animate-gradient {
+    animation: gradient 8s linear infinite;
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}
+```
+
+```tsx src/components/hero.tsx
+<h1 className="bg-gradient-to-r from-white via-primary to-white bg-[length:200%_auto] bg-clip-text text-transparent animate-gradient">
+  Animated Gradient Text
+</h1>
+```
+
+---
+
+### Shine Effect (Hover)
+
+```css src/app/globals.css
+@layer utilities {
+  .animate-shine {
+    animation: shine 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shine {
+    from { transform: translateX(-200%); }
+    to { transform: translateX(200%); }
+  }
+}
+```
+
+```tsx
+<button className="relative group overflow-hidden">
+  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[200%] group-hover:animate-shine pointer-events-none" />
+  <span>Hover for Shine</span>
+</button>
+```
+
+---
+
+### Animated Number Counter
+
+```tsx src/components/animated-number.tsx
+"use client";
+import { useEffect, useState } from "react";
+
+export function AnimatedNumber({ value, simbol = "+" }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    const duration = 2000;               // 2 seconds
+    const increment = end / (duration / 16);  // 60fps
+
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <span className="text-2xl font-bold">{count}{simbol}</span>;
+}
+```
+
+**Usage:**
+
+```tsx
+<AnimatedNumber value={5000} simbol="+" />
+```
+
+---
+
+## SVG Path Animations
+
+The animated background uses SVG `animateMotion`:
+
+```tsx src/components/animatedBackground.tsx
+<svg viewBox="0 0 602 602">
+  <ellipse cx="295" cy="193" rx="1.07" ry="1.07" fill="#ef4444">
+    <animateMotion dur="10s" repeatCount="indefinite" rotate="auto">
+      <mpath xlinkHref="#path_2" />
+    </animateMotion>
+  </ellipse>
+  
+  <path d="M294.685 193.474L268.932 219.258" stroke="url(#paint3_linear)">
+    <animateMotion dur="10s" repeatCount="indefinite" rotate="auto">
+      <mpath xlinkHref="#path_2" />
+    </animateMotion>
+  </path>
+</svg>
+```
+
+**Key attributes:**
+- `dur`: Animation duration
+- `repeatCount="indefinite"`: Loops forever
+- `rotate="auto"`: Element rotates to follow path
+- `<mpath xlinkHref="#path_2" />`: References path to follow
+
+---
+
+## Performance Optimizations
+
+### Use `will-change` Sparingly
+
+Framer Motion automatically applies `will-change` for animated properties. Avoid manually adding it:
+
+```css
+/* Avoid overuse */
+.element {
+  will-change: transform, opacity;  /* Can hurt performance */
+}
+```
+
+---
+
+### Animate Transform and Opacity
+
+These properties are GPU-accelerated and performant:
+
+```tsx
+// ✅ Performant
+<motion.div animate={{ x: 100, opacity: 0.5 }} />
+
+// ❌ Avoid (causes reflows)
+<motion.div animate={{ width: 300, height: 200 }} />
+```
+
+---
+
+### Use `layout` Prop for Layout Animations
+
+When animating size or position changes:
+
+```tsx
+<motion.div layout>
+  Content that changes size smoothly
+</motion.div>
+```
+
+Framer Motion uses FLIP technique for performant layout animations.
+
+---
+
+### Reduce Motion for Accessibility
+
+Respect user preferences for reduced motion:
+
+```tsx
+import { useReducedMotion } from "framer-motion";
+
+function Component() {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 50 }}
+      animate={{ opacity: 1, y: 0 }}
+    />
+  );
+}
+```
+
+Or use CSS:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+---
+
+### Lazy Load Animations
+
+For off-screen content, use `whileInView` with `once: true`:
+
+```tsx
+<motion.div
+  initial="hidden"
+  whileInView="visible"
+  viewport={{ once: true }}  // Only animate on first view
+>
+  Content
+</motion.div>
+```
+
+---
+
+## Timing Functions (Easing)
+
+Framer Motion supports multiple easing functions:
+
+```tsx
+// Linear (constant speed)
+transition={{ ease: "linear", duration: 1 }}
+
+// Ease Out (fast start, slow end) - Best for entrances
+transition={{ ease: "easeOut", duration: 0.5 }}
+
+// Ease In (slow start, fast end) - Best for exits
+transition={{ ease: "easeIn", duration: 0.3 }}
+
+// Ease In-Out (slow start and end) - General purpose
+transition={{ ease: "easeInOut", duration: 0.6 }}
+
+// Custom cubic-bezier
+transition={{ ease: [0.43, 0.13, 0.23, 0.96], duration: 0.8 }}
+```
+
+**Recommended defaults:**
+- Entrances: `easeOut` with 0.5s duration
+- Exits: `easeIn` with 0.3s duration
+- Interactions: `easeInOut` with 0.2s duration
+
+---
+
+## Custom Animation Hooks
+
+### useInView Hook
+
+Track when an element enters the viewport:
+
+```tsx
+import { useInView } from "framer-motion";
+import { useRef } from "react";
+
+function Component() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <div ref={ref} style={{ opacity: isInView ? 1 : 0 }}>
+      Content
+    </div>
+  );
+}
+```
+
+---
+
+### useAnimation Hook
+
+Programmatic control over animations:
+
+```tsx
+import { motion, useAnimation } from "framer-motion";
+import { useEffect } from "react";
+
+function Component() {
+  const controls = useAnimation();
+
+  useEffect(() => {
+    controls.start({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5 }
+    });
+  }, [controls]);
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={controls}>
+      Content
+    </motion.div>
+  );
+}
+```
+
+---
+
+## Animation Best Practices
+
+<Warning>
+**Don't animate on every render.** Use `initial` and `animate` props instead of inline styles that change on state updates.
+</Warning>
+
+### DO ✅
+
+```tsx
+// Efficient: Framer Motion handles optimization
+<motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+>
+  Content
+</motion.div>
+```
+
+### DON'T ❌
+
+```tsx
+// Inefficient: Triggers animation on every render
+<motion.div style={{ opacity: isVisible ? 1 : 0 }}>
+  Content
+</motion.div>
+```
+
+---
+
+### Keep Animations Subtle
+
+- **Duration:** 0.3-0.6s for most interactions
+- **Distance:** Move 10-30px for fade-ups
+- **Scale:** 1.02-1.05 for hover effects
+- **Stagger:** 0.05-0.2s between items
+
+**Too aggressive:**
+
+```tsx
+// ❌ Over-the-top
+<motion.div whileHover={{ scale: 1.5, rotate: 360 }}>
+```
+
+**Subtle and professional:**
+
+```tsx
+// ✅ Subtle enhancement
+<motion.div whileHover={{ scale: 1.02, y: -4 }}>
+```
+
+---
+
+### Use Consistent Timing
+
+Define animation constants at the top of files:
+
+```tsx src/components/hero.tsx
+const ANIMATION_CONFIG = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.2, delayChildren: 0.1 }
+    }
+  },
+  item: {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", damping: 20, stiffness: 100 }
+    }
+  }
+} as const;
+```
+
+**Benefits:**
+- Easy to adjust all animations at once
+- TypeScript autocomplete for variant names
+- Reusable across components
+
+---
+
+### Avoid Animating Width/Height
+
+Animating dimensions causes layout recalculation:
+
+```tsx
+// ❌ Causes reflow
+<motion.div animate={{ width: 300 }} />
+
+// ✅ Use scale instead
+<motion.div animate={{ scaleX: 1.5 }} />
+```
+
+---
+
+### Optimize for Mobile
+
+Mobile devices have less GPU power. Reduce complexity:
+
+```tsx
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+
+function Component() {
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  return (
+    <motion.div
+      animate={{ y: isMobile ? 0 : 100 }}  // Disable on mobile
+      transition={{ duration: isMobile ? 0 : 0.5 }}
+    >
+      Content
+    </motion.div>
+  );
+}
+```
+
+---
+
+## Debugging Animations
+
+### Visualize Animation State
+
+Use React DevTools with Framer Motion:
+
+1. Install [Framer Motion DevTools](https://www.framer.com/motion/guide-devtools/)
+2. Add to app:
+
+```tsx
+import { MotionDevTools } from "framer-motion-devtools";
+
+function App() {
+  return (
+    <>
+      <MotionDevTools />
+      <Component />
+    </>
+  );
+}
+```
+
+---
+
+### Log Animation Events
+
+```tsx
+<motion.div
+  animate={{ opacity: 1 }}
+  onAnimationStart={() => console.log("Animation started")}
+  onAnimationComplete={() => console.log("Animation completed")}
+>
+  Content
+</motion.div>
+```
+
+---
+
+## Common Issues
+
+### Animations Not Running
+
+**Cause:** Using Framer Motion in Server Components
+
+**Fix:** Add `"use client"` directive:
+
+```tsx
+"use client";
+import { motion } from "framer-motion";
+```
+
+---
+
+### Janky Animations
+
+**Cause:** Animating expensive properties (width, height, top, left)
+
+**Fix:** Use transform properties (x, y, scale):
+
+```tsx
+// ❌ Janky
+<motion.div animate={{ left: 100 }} />
+
+// ✅ Smooth
+<motion.div animate={{ x: 100 }} />
+```
+
+---
+
+### Animations Fire on Every Scroll
+
+**Cause:** Missing `viewport={{ once: true }}`
+
+**Fix:**
+
+```tsx
+<motion.div
+  whileInView="visible"
+  viewport={{ once: true }}  // Add this
+>
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+
+<Card title="Styling System" icon="palette" href="/customization/styling">
+Customize colors and design tokens
+</Card>
+
+<Card title="Content Management" icon="file-json" href="/customization/content-management">
+Update portfolio content
+</Card>
+
+</CardGroup>

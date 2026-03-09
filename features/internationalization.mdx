@@ -1,0 +1,516 @@
+---
+title: 'Internationalization (i18n)'
+description: 'Complete bilingual support with Zustand state management and content.json structure'
+icon: 'language'
+---
+
+## Overview
+
+The portfolio implements a complete internationalization system supporting Portuguese (ptBR) and English (en) with persistent language selection, client-side state management, and centralized content storage.
+
+## Architecture
+
+<CardGroup cols={3}>
+  <Card title="Zustand Store" icon="database">
+    Client-side state management with localStorage persistence
+  </Card>
+  <Card title="Content JSON" icon="file-code">
+    Centralized bilingual content structure
+  </Card>
+  <Card title="Translation Utility" icon="arrows-rotate">
+    Type-safe translation helper function
+  </Card>
+</CardGroup>
+
+## Language Store (Zustand)
+
+The language state is managed with Zustand for simplicity and performance:
+
+### Store Location
+
+```
+src/store/language-store.ts
+```
+
+### Store Implementation
+
+```typescript
+import { create } from "zustand";
+
+export type Lang = "ptBR" | "en";
+
+type LanguageState = {
+  lang: Lang;
+  hydrated: boolean;
+  hydrate: () => void;
+  setLang: (lang: Lang) => void;
+};
+
+const KEY = "portfolio-language";
+
+export const useLanguageStore = create<LanguageState>((set, get) => ({
+  lang: "ptBR",
+  hydrated: false,
+
+  hydrate: () => {
+    if (get().hydrated) return;
+    const stored = (localStorage.getItem(KEY) as Lang | null) ?? "ptBR";
+    set({ lang: stored, hydrated: true });
+  },
+
+  setLang: (lang) => {
+    localStorage.setItem(KEY, lang);
+    set({ lang });
+  }
+}));
+```
+
+<Note>
+The `hydrate` function is called once on app mount to sync state with localStorage, preventing hydration mismatches in Next.js.
+</Note>
+
+## Hydration Hook
+
+To prevent hydration errors in Next.js, a custom hook initializes the store:
+
+### Hook Location
+
+```
+src/app/hooks/use-language-hydrate.ts
+```
+
+### Implementation
+
+```typescript
+import { useLanguageStore } from "@/store/language-store";
+import { useEffect } from "react";
+
+export function useLanguageHydrate() {
+  const hydrate = useLanguageStore((s) => s.hydrate);
+  useEffect(() => hydrate(), [hydrate]);
+}
+```
+
+### Usage in Layout
+
+```tsx
+// src/app/layout.tsx
+import { useLanguageHydrate } from "@/app/hooks/use-language-hydrate";
+
+export default function RootLayout({ children }) {
+  useLanguageHydrate(); // Call once at app root
+  
+  return (
+    <html>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+<Tip>
+The hydration pattern ensures the server-rendered HTML matches the initial client render, preventing React hydration warnings.
+</Tip>
+
+## Translation Utility
+
+A simple translation helper handles both string and object formats:
+
+### Utility Location
+
+```
+src/utils/i18n.ts
+```
+
+### Implementation
+
+```typescript
+type Lang = "ptBR" | "en";
+type I18nText = string | { ptBR: string; en: string };
+
+export function translate(value: I18nText, lang: Lang) {
+  if (typeof value === "string") return value;
+  return value[lang] ?? value.ptBR;
+}
+```
+
+### Usage Examples
+
+```tsx
+import { translate } from "@/utils/i18n";
+import { useLanguageStore } from "@/store/language-store";
+import content from "@/utils/content.json";
+
+function MyComponent() {
+  const { lang } = useLanguageStore();
+  
+  return (
+    <div>
+      {/* String literal (no translation needed) */}
+      <h1>{translate(content.hero.name, lang)}</h1>
+      {/* Returns: "Thalyson Rafael" */}
+      
+      {/* Bilingual object */}
+      <p>{translate(content.hero.tagline, lang)}</p>
+      {/* Returns (ptBR): "Transformo visão técnica..." */}
+      {/* Returns (en): "I turn technical vision..." */}
+    </div>
+  );
+}
+```
+
+## Content Structure
+
+All translatable content is stored in a single JSON file:
+
+### Content Location
+
+```
+src/utils/content.json
+```
+
+### Structure Pattern
+
+Content follows consistent patterns for translation:
+
+<CodeGroup>
+
+```json Simple String (No Translation)
+{
+  "hero": {
+    "name": "Thalyson Rafael"
+  }
+}
+```
+
+```json Bilingual Object
+{
+  "hero": {
+    "title": {
+      "ptBR": "Desenvolvedor Full Stack",
+      "en": "Full Stack Developer"
+    }
+  }
+}
+```
+
+```json Nested Bilingual Content
+{
+  "about": {
+    "differentiation": {
+      "items": [
+        {
+          "title": { "ptBR": "Gestão de Infra:", "en": "Infra strategy:" },
+          "description": {
+            "ptBR": "Análises comparativas para escolher o stack de deploy mais eficiente.",
+            "en": "Comparative analysis to choose the most efficient deployment stack."
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+```json Arrays with Bilingual Items
+{
+  "projects": {
+    "labels": {
+      "liveDemo": { "ptBR": "Demo ao vivo", "en": "Live demo" },
+      "frontend": { "ptBR": "Frontend", "en": "Frontend" },
+      "backend": { "ptBR": "Backend", "en": "Backend" }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+## Language Switcher Component
+
+The language switcher is a Select component:
+
+### Component Location
+
+```
+src/components/select-language.tsx
+```
+
+### Implementation
+
+```tsx
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Lang, useLanguageStore } from "@/store/language-store";
+
+export function SelectLanguage() {
+  const { lang, setLang } = useLanguageStore();
+  
+  return (
+    <Select value={lang} onValueChange={(value) => setLang(value as Lang)}>
+      <SelectTrigger className="max-w-36 w-fit min-h-12 border-l-0 border-b-0">
+        <SelectValue placeholder="PT-BR" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="ptBR">PT-BR</SelectItem>
+        <SelectItem value="en">EN</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+```
+
+<Note>
+The language selection is automatically persisted to localStorage via the Zustand store's `setLang` function.
+</Note>
+
+## Adding New Languages
+
+<Steps>
+  <Step title="Update Type Definition">
+    Add new language code to the `Lang` type:
+    
+    ```typescript
+    // src/store/language-store.ts
+    export type Lang = "ptBR" | "en" | "es"; // Added Spanish
+    ```
+  </Step>
+  
+  <Step title="Update Translation Utility">
+    Modify the `translate` function to handle the new language:
+    
+    ```typescript
+    // src/utils/i18n.ts
+    type Lang = "ptBR" | "en" | "es";
+    type I18nText = string | { ptBR: string; en: string; es?: string };
+    
+    export function translate(value: I18nText, lang: Lang) {
+      if (typeof value === "string") return value;
+      return value[lang] ?? value.en ?? value.ptBR; // Fallback chain
+    }
+    ```
+  </Step>
+  
+  <Step title="Add Translations to Content">
+    Update `content.json` with new language keys:
+    
+    ```json
+    {
+      "hero": {
+        "title": {
+          "ptBR": "Desenvolvedor Full Stack",
+          "en": "Full Stack Developer",
+          "es": "Desarrollador Full Stack"
+        }
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Update Language Switcher">
+    Add new option to SelectLanguage component:
+    
+    ```tsx
+    <SelectContent>
+      <SelectItem value="ptBR">PT-BR</SelectItem>
+      <SelectItem value="en">EN</SelectItem>
+      <SelectItem value="es">ES</SelectItem>
+    </SelectContent>
+    ```
+  </Step>
+</Steps>
+
+## Adding New Translations
+
+<Steps>
+  <Step title="Identify Content Location">
+    Determine which section of `content.json` needs the new content:
+    
+    ```json
+    {
+      "hero": { /* Hero section content */ },
+      "about": { /* About section content */ },
+      "projects": { /* Projects section content */ },
+      "contact": { /* Contact section content */ }
+    }
+    ```
+  </Step>
+  
+  <Step title="Add Bilingual Entry">
+    Add your new content with both language versions:
+    
+    ```json
+    {
+      "hero": {
+        "newField": {
+          "ptBR": "Novo conteúdo em português",
+          "en": "New content in English"
+        }
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Use in Component">
+    Import and use the translation:
+    
+    ```tsx
+    import { translate } from "@/utils/i18n";
+    import { useLanguageStore } from "@/store/language-store";
+    import content from "@/utils/content.json";
+    
+    function MyComponent() {
+      const { lang } = useLanguageStore();
+      
+      return (
+        <p>{translate(content.hero.newField, lang)}</p>
+      );
+    }
+    ```
+  </Step>
+</Steps>
+
+## Best Practices
+
+<Accordion title="Keep Content Centralized">
+  Always add translations to `content.json` rather than hardcoding strings in components. This:
+  - Makes it easier to find and update translations
+  - Ensures consistency across the app
+  - Allows for easy export to translation services
+  - Keeps components clean and focused on logic
+</Accordion>
+
+<Accordion title="Use Semantic Keys">
+  Structure your content.json with clear, semantic keys:
+  
+  ```json
+  ✅ Good
+  {
+    "contact": {
+      "form": {
+        "submitButton": { "ptBR": "Enviar", "en": "Submit" }
+      }
+    }
+  }
+  
+  ❌ Bad
+  {
+    "text1": { "ptBR": "Enviar", "en": "Submit" }
+  }
+  ```
+</Accordion>
+
+<Accordion title="Provide Fallbacks">
+  The `translate` function already provides a fallback to `ptBR`. Ensure all content has at least the default language:
+  
+  ```typescript
+  // Will fallback to ptBR if 'en' is missing
+  return value[lang] ?? value.ptBR;
+  ```
+</Accordion>
+
+<Accordion title="Consider Context">
+  Some words translate differently based on context. Use descriptive keys:
+  
+  ```json
+  {
+    "projects": {
+      "viewButton": { "ptBR": "Ver projeto", "en": "View project" },
+      "viewAllLink": { "ptBR": "Ver todos", "en": "View all" }
+    }
+  }
+  ```
+</Accordion>
+
+## Type Safety
+
+<Tip>
+For enhanced type safety, consider generating TypeScript types from your content.json:
+
+```typescript
+// scripts/generate-i18n-types.ts
+import content from '../src/utils/content.json';
+import fs from 'fs';
+
+type DeepKeys<T> = T extends object
+  ? { [K in keyof T]: `${K & string}${DeepKeys<T[K]> extends never ? '' : `.${DeepKeys<T[K]>}`}` }[keyof T]
+  : never;
+
+type ContentKeys = DeepKeys<typeof content>;
+
+const types = `
+export type Lang = 'ptBR' | 'en';
+export type ContentKey = ${JSON.stringify(content, null, 2)};
+`;
+
+fs.writeFileSync('src/types/i18n.ts', types);
+```
+
+This prevents typos when accessing content keys.
+</Tip>
+
+## Performance Considerations
+
+<Note>
+The i18n system is optimized for performance:
+
+1. **Client-side only**: Translation happens on the client, avoiding server-side overhead
+2. **Single JSON import**: All content is bundled once, not split by language
+3. **Zustand optimization**: Selective re-renders using Zustand's selector pattern
+4. **localStorage caching**: Language preference persists across sessions
+
+For even better performance, consider:
+- Code-splitting content.json by section
+- Using dynamic imports for large translation objects
+- Implementing a translation management service for production
+</Note>
+
+## Debugging Tips
+
+<Accordion title="Check Current Language">
+  Use React DevTools or add a debug component:
+  
+  ```tsx
+  function LanguageDebug() {
+    const { lang, hydrated } = useLanguageStore();
+    return (
+      <div className="fixed bottom-4 right-4 bg-black text-white p-2 text-xs">
+        Lang: {lang} | Hydrated: {hydrated ? '✓' : '✗'}
+      </div>
+    );
+  }
+  ```
+</Accordion>
+
+<Accordion title="Verify localStorage">
+  Check localStorage in browser DevTools:
+  
+  ```javascript
+  // Console
+  localStorage.getItem('portfolio-language')
+  
+  // Clear to reset
+  localStorage.removeItem('portfolio-language')
+  ```
+</Accordion>
+
+<Accordion title="Missing Translation Warnings">
+  Add a development-only warning:
+  
+  ```typescript
+  export function translate(value: I18nText, lang: Lang) {
+    if (typeof value === "string") return value;
+    
+    if (process.env.NODE_ENV === 'development' && !value[lang]) {
+      console.warn(`Missing translation for language: ${lang}`, value);
+    }
+    
+    return value[lang] ?? value.ptBR;
+  }
+  ```
+</Accordion>

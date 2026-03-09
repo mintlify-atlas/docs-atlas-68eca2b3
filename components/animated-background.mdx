@@ -1,0 +1,600 @@
+---
+title: 'Animated Background'
+description: 'Canvas-based animated grid background with interactive hover effects'
+icon: 'sparkles'
+---
+
+## Overview
+
+The `Squares` component creates a dynamic, animated grid background using HTML5 Canvas. It features configurable animation direction, speed, colors, and interactive hover effects that respond to mouse movement.
+
+## Component Interface
+
+```typescript title="src/components/Squares.tsx"
+interface SquaresProps {
+  direction?: "diagonal" | "up" | "right" | "down" | "left";
+  speed?: number;
+  borderColor?: CanvasStrokeStyle;
+  squareSize?: number;
+  hoverFillColor?: CanvasStrokeStyle;
+}
+```
+
+### Props
+
+<ParamField path="direction" type="string" default="right">
+  Animation direction for the grid movement:
+  - `"right"`: Grid moves to the right
+  - `"left"`: Grid moves to the left
+  - `"up"`: Grid moves upward
+  - `"down"`: Grid moves downward
+  - `"diagonal"`: Grid moves diagonally (right + down)
+</ParamField>
+
+<ParamField path="speed" type="number" default="1">
+  Animation speed in pixels per frame. Higher values create faster movement.
+  Minimum effective value is `0.1`.
+</ParamField>
+
+<ParamField path="borderColor" type="CanvasStrokeStyle" default="#999">
+  Color of the grid lines. Accepts any valid CSS color string, CanvasGradient, or CanvasPattern.
+</ParamField>
+
+<ParamField path="squareSize" type="number" default="40">
+  Size of each square in the grid (in pixels). Larger values create a coarser grid.
+</ParamField>
+
+<ParamField path="hoverFillColor" type="CanvasStrokeStyle" default="#222">
+  Fill color for squares when hovered. Accepts any valid CSS color string, CanvasGradient, or CanvasPattern.
+</ParamField>
+
+## Usage Examples
+
+<CodeGroup>
+```tsx Default Configuration
+import Squares from "@/components/Squares";
+
+export function Background() {
+  return (
+    <div className="fixed inset-0 -z-10">
+      <Squares />
+    </div>
+  );
+}
+```
+
+```tsx Custom Animation
+import Squares from "@/components/Squares";
+
+export function Background() {
+  return (
+    <div className="fixed inset-0 -z-10">
+      <Squares
+        direction="diagonal"
+        speed={2}
+        squareSize={50}
+        borderColor="rgba(255, 255, 255, 0.1)"
+        hoverFillColor="rgba(139, 92, 246, 0.3)"
+      />
+    </div>
+  );
+}
+```
+
+```tsx Slow Vertical Movement
+import Squares from "@/components/Squares";
+
+export function Background() {
+  return (
+    <div className="fixed inset-0 -z-10">
+      <Squares
+        direction="down"
+        speed={0.5}
+        borderColor="#333"
+        hoverFillColor="#444"
+      />
+    </div>
+  );
+}
+```
+
+```tsx Portfolio Hero Implementation
+import Squares from "@/components/Squares";
+import { motion } from "framer-motion";
+
+export function Hero() {
+  return (
+    <section className="relative min-h-screen">
+      {/* Animated background layer */}
+      <div className="absolute inset-0 -z-10">
+        <Squares
+          direction="right"
+          speed={1}
+          borderColor="#999"
+          squareSize={40}
+          hoverFillColor="#222"
+        />
+      </div>
+      
+      {/* Content layer */}
+      <motion.div className="relative z-10">
+        <h1>Welcome to my portfolio</h1>
+      </motion.div>
+    </section>
+  );
+}
+```
+</CodeGroup>
+
+## Animation System
+
+The component uses `requestAnimationFrame` for smooth, performant animations:
+
+```typescript
+const updateAnimation = () => {
+  const effectiveSpeed = Math.max(speed, 0.1);
+  switch (direction) {
+    case "right":
+      gridOffset.current.x = (gridOffset.current.x - effectiveSpeed + squareSize) % squareSize;
+      break;
+    case "left":
+      gridOffset.current.x = (gridOffset.current.x + effectiveSpeed + squareSize) % squareSize;
+      break;
+    case "up":
+      gridOffset.current.y = (gridOffset.current.y + effectiveSpeed + squareSize) % squareSize;
+      break;
+    case "down":
+      gridOffset.current.y = (gridOffset.current.y - effectiveSpeed + squareSize) % squareSize;
+      break;
+    case "diagonal":
+      gridOffset.current.x = (gridOffset.current.x - effectiveSpeed + squareSize) % squareSize;
+      gridOffset.current.y = (gridOffset.current.y - effectiveSpeed + squareSize) % squareSize;
+      break;
+  }
+  drawGrid();
+  requestRef.current = requestAnimationFrame(updateAnimation);
+};
+```
+
+### Key Features
+
+<Steps>
+  <Step title="Infinite Loop">
+    The grid offset uses modulo arithmetic to create a seamless infinite loop effect
+  </Step>
+  <Step title="Frame-Based Animation">
+    Uses `requestAnimationFrame` for 60 FPS animations synchronized with browser refresh
+  </Step>
+  <Step title="Efficient Rendering">
+    Only renders squares visible in the viewport plus one extra row/column
+  </Step>
+</Steps>
+
+## Interactive Hover Effects
+
+The component tracks mouse position and highlights squares under the cursor:
+
+```typescript
+const handleMouseMove = (event: MouseEvent) => {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = event.clientX - rect.left;
+  const mouseY = event.clientY - rect.top;
+
+  const startX = Math.floor(gridOffset.current.x / squareSize) * squareSize;
+  const startY = Math.floor(gridOffset.current.y / squareSize) * squareSize;
+
+  const hoveredSquareX = Math.floor((mouseX + gridOffset.current.x - startX) / squareSize);
+  const hoveredSquareY = Math.floor((mouseY + gridOffset.current.y - startY) / squareSize);
+
+  if (
+    !hoveredSquareRef.current ||
+    hoveredSquareRef.current.x !== hoveredSquareX ||
+    hoveredSquareRef.current.y !== hoveredSquareY
+  ) {
+    hoveredSquareRef.current = { x: hoveredSquareX, y: hoveredSquareY };
+  }
+};
+```
+
+<Note>
+The hover effect accounts for grid animation offset, ensuring accurate square highlighting even during movement.
+</Note>
+
+## Gradient Overlay
+
+The component applies a radial gradient overlay for visual depth:
+
+```typescript
+const gradient = ctx.createRadialGradient(
+  canvas.width / 2,
+  canvas.height / 2,
+  0,
+  canvas.width / 2,
+  canvas.height / 2,
+  Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / 2
+);
+gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+gradient.addColorStop(1, "#060010");
+
+ctx.fillStyle = gradient;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+```
+
+This creates a vignette effect, drawing focus to the center of the screen.
+
+## Performance Considerations
+
+### Responsive Canvas
+
+The canvas automatically adjusts to container size:
+
+```typescript
+const resizeCanvas = () => {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  numSquaresX.current = Math.ceil(canvas.width / squareSize) + 1;
+  numSquaresY.current = Math.ceil(canvas.height / squareSize) + 1;
+};
+
+window.addEventListener("resize", resizeCanvas);
+```
+
+### Optimization Tips
+
+<CardGroup cols={2}>
+  <Card title="Reduce Square Size" icon="compress">
+    Larger `squareSize` values (60-80px) reduce the number of squares to render, improving performance on lower-end devices
+  </Card>
+  <Card title="Lower Animation Speed" icon="gauge">
+    Slower speeds (0.5-1) require less frequent redraws and reduce CPU usage
+  </Card>
+  <Card title="Simplify Colors" icon="palette">
+    Solid colors perform better than gradients or patterns
+  </Card>
+  <Card title="Fixed Positioning" icon="thumbtack">
+    Use `position: fixed` with `z-index: -10` to keep the canvas behind content without layout recalculations
+  </Card>
+</CardGroup>
+
+<Warning>
+Avoid using extremely small `squareSize` values (< 20px) as they dramatically increase the number of squares to render, potentially causing performance issues.
+</Warning>
+
+## Customization Guide
+
+### Theme Integration
+
+Integrate with your design system's color palette:
+
+```tsx
+import Squares from "@/components/Squares";
+
+export function Background() {
+  return (
+    <Squares
+      borderColor="hsl(var(--border))" // Use CSS custom property
+      hoverFillColor="hsl(var(--primary) / 0.1)"
+    />
+  );
+}
+```
+
+### Dark/Light Mode Support
+
+```tsx
+"use client";
+
+import Squares from "@/components/Squares";
+import { useTheme } from "next-themes";
+
+export function Background() {
+  const { theme } = useTheme();
+  
+  return (
+    <Squares
+      borderColor={theme === "dark" ? "#333" : "#ddd"}
+      hoverFillColor={theme === "dark" ? "#444" : "#eee"}
+    />
+  );
+}
+```
+
+### Custom Gradients
+
+Modify the gradient overlay by editing the source:
+
+```typescript title="Custom Gradient Example"
+// Replace the gradient with a custom color scheme
+const gradient = ctx.createRadialGradient(
+  canvas.width / 2,
+  canvas.height / 2,
+  0,
+  canvas.width / 2,
+  canvas.height / 2,
+  Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / 2
+);
+gradient.addColorStop(0, "rgba(139, 92, 246, 0)"); // Transparent purple center
+gradient.addColorStop(1, "rgba(17, 24, 39, 1)"); // Dark gray edges
+```
+
+### Animation Patterns
+
+Create unique visual effects by combining props:
+
+<CodeGroup>
+```tsx Slow Diagonal Drift
+<Squares
+  direction="diagonal"
+  speed={0.3}
+  squareSize={60}
+  borderColor="rgba(255, 255, 255, 0.05)"
+  hoverFillColor="rgba(139, 92, 246, 0.2)"
+/>
+```
+
+```tsx Fast Horizontal Scan
+<Squares
+  direction="right"
+  speed={3}
+  squareSize={30}
+  borderColor="#0ea5e9"
+  hoverFillColor="#0284c7"
+/>
+```
+
+```tsx Minimal Static Grid
+<Squares
+  direction="right"
+  speed={0}
+  squareSize={80}
+  borderColor="rgba(255, 255, 255, 0.03)"
+  hoverFillColor="rgba(255, 255, 255, 0.1)"
+/>
+```
+</CodeGroup>
+
+## Implementation Details
+
+### Canvas Rendering Loop
+
+```typescript
+const drawGrid = () => {
+  if (!ctx) return;
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  const startX = Math.floor(gridOffset.current.x / squareSize) * squareSize;
+  const startY = Math.floor(gridOffset.current.y / squareSize) * squareSize;
+  
+  for (let x = startX; x < canvas.width + squareSize; x += squareSize) {
+    for (let y = startY; y < canvas.height + squareSize; y += squareSize) {
+      const squareX = x - (gridOffset.current.x % squareSize);
+      const squareY = y - (gridOffset.current.y % squareSize);
+      
+      // Draw hover fill if this square is hovered
+      if (
+        hoveredSquareRef.current &&
+        Math.floor((x - startX) / squareSize) === hoveredSquareRef.current.x &&
+        Math.floor((y - startY) / squareSize) === hoveredSquareRef.current.y
+      ) {
+        ctx.fillStyle = hoverFillColor;
+        ctx.fillRect(squareX, squareY, squareSize, squareSize);
+      }
+      
+      ctx.strokeStyle = borderColor;
+      ctx.strokeRect(squareX, squareY, squareSize, squareSize);
+    }
+  }
+  
+  // Apply gradient overlay
+  const gradient = ctx.createRadialGradient(
+    canvas.width / 2,
+    canvas.height / 2,
+    0,
+    canvas.width / 2,
+    canvas.height / 2,
+    Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / 2
+  );
+  gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+  gradient.addColorStop(1, "#060010");
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+};
+```
+
+### Cleanup
+
+The component properly cleans up event listeners and animation frames:
+
+```typescript
+return () => {
+  window.removeEventListener("resize", resizeCanvas);
+  if (requestRef.current) cancelAnimationFrame(requestRef.current);
+  canvas.removeEventListener("mousemove", handleMouseMove);
+  canvas.removeEventListener("mouseleave", handleMouseLeave);
+};
+```
+
+<Tip>
+Always ensure the canvas is positioned absolutely or fixed with a negative z-index to prevent blocking interactions with foreground content:
+
+```tsx
+<div className="fixed inset-0 -z-10">
+  <Squares />
+</div>
+```
+</Tip>
+
+## Full Component Source
+
+```typescript title="src/components/Squares.tsx" showLineNumbers
+"use client";
+
+import React, { useRef, useEffect } from "react";
+
+type CanvasStrokeStyle = string | CanvasGradient | CanvasPattern;
+
+interface GridOffset {
+  x: number;
+  y: number;
+}
+
+interface SquaresProps {
+  direction?: "diagonal" | "up" | "right" | "down" | "left";
+  speed?: number;
+  borderColor?: CanvasStrokeStyle;
+  squareSize?: number;
+  hoverFillColor?: CanvasStrokeStyle;
+}
+
+const Squares: React.FC<SquaresProps> = ({
+  direction = "right",
+  speed = 1,
+  borderColor = "#999",
+  squareSize = 40,
+  hoverFillColor = "#222"
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const requestRef = useRef<number | null>(null);
+  const numSquaresX = useRef<number>(0);
+  const numSquaresY = useRef<number>(0);
+  const gridOffset = useRef<GridOffset>({ x: 0, y: 0 });
+  const hoveredSquareRef = useRef<GridOffset | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    const resizeCanvas = () => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      numSquaresX.current = Math.ceil(canvas.width / squareSize) + 1;
+      numSquaresY.current = Math.ceil(canvas.height / squareSize) + 1;
+    };
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    const drawGrid = () => {
+      if (!ctx) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const startX = Math.floor(gridOffset.current.x / squareSize) * squareSize;
+      const startY = Math.floor(gridOffset.current.y / squareSize) * squareSize;
+
+      for (let x = startX; x < canvas.width + squareSize; x += squareSize) {
+        for (let y = startY; y < canvas.height + squareSize; y += squareSize) {
+          const squareX = x - (gridOffset.current.x % squareSize);
+          const squareY = y - (gridOffset.current.y % squareSize);
+
+          if (
+            hoveredSquareRef.current &&
+            Math.floor((x - startX) / squareSize) === hoveredSquareRef.current.x &&
+            Math.floor((y - startY) / squareSize) === hoveredSquareRef.current.y
+          ) {
+            ctx.fillStyle = hoverFillColor;
+            ctx.fillRect(squareX, squareY, squareSize, squareSize);
+          }
+
+          ctx.strokeStyle = borderColor;
+          ctx.strokeRect(squareX, squareY, squareSize, squareSize);
+        }
+      }
+
+      const gradient = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        0,
+        canvas.width / 2,
+        canvas.height / 2,
+        Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / 2
+      );
+      gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+      gradient.addColorStop(1, "#060010");
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    };
+
+    const updateAnimation = () => {
+      const effectiveSpeed = Math.max(speed, 0.1);
+      switch (direction) {
+        case "right":
+          gridOffset.current.x = (gridOffset.current.x - effectiveSpeed + squareSize) % squareSize;
+          break;
+        case "left":
+          gridOffset.current.x = (gridOffset.current.x + effectiveSpeed + squareSize) % squareSize;
+          break;
+        case "up":
+          gridOffset.current.y = (gridOffset.current.y + effectiveSpeed + squareSize) % squareSize;
+          break;
+        case "down":
+          gridOffset.current.y = (gridOffset.current.y - effectiveSpeed + squareSize) % squareSize;
+          break;
+        case "diagonal":
+          gridOffset.current.x = (gridOffset.current.x - effectiveSpeed + squareSize) % squareSize;
+          gridOffset.current.y = (gridOffset.current.y - effectiveSpeed + squareSize) % squareSize;
+          break;
+        default:
+          break;
+      }
+
+      drawGrid();
+      requestRef.current = requestAnimationFrame(updateAnimation);
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      const startX = Math.floor(gridOffset.current.x / squareSize) * squareSize;
+      const startY = Math.floor(gridOffset.current.y / squareSize) * squareSize;
+
+      const hoveredSquareX = Math.floor((mouseX + gridOffset.current.x - startX) / squareSize);
+      const hoveredSquareY = Math.floor((mouseY + gridOffset.current.y - startY) / squareSize);
+
+      if (
+        !hoveredSquareRef.current ||
+        hoveredSquareRef.current.x !== hoveredSquareX ||
+        hoveredSquareRef.current.y !== hoveredSquareY
+      ) {
+        hoveredSquareRef.current = { x: hoveredSquareX, y: hoveredSquareY };
+      }
+    };
+
+    const handleMouseLeave = () => {
+      hoveredSquareRef.current = null;
+    };
+
+    canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("mouseleave", handleMouseLeave);
+    requestRef.current = requestAnimationFrame(updateAnimation);
+
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [direction, speed, borderColor, hoverFillColor, squareSize]);
+
+  return <canvas ref={canvasRef} className="w-full h-full border-none block"></canvas>;
+};
+
+export default Squares;
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="GitHub Stats" icon="github" href="/components/github-stats">
+    Learn about the GitHub statistics component with animated numbers
+  </Card>
+  <Card title="UI Components" icon="palette" href="/components/ui-components">
+    Explore the complete UI component library
+  </Card>
+</CardGroup>

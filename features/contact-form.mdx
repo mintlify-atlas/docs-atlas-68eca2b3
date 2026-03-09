@@ -1,0 +1,451 @@
+---
+title: 'Contact Form'
+description: 'Validated contact form with React Hook Form, Zod schema validation, and WhatsApp integration'
+icon: 'envelope'
+---
+
+## Overview
+
+The Contact component provides multiple ways to get in touch: email, location display, social media links, and a validated WhatsApp message form with real-time character counting.
+
+## Component Location
+
+```
+src/components/contact.tsx
+```
+
+## Component Structure
+
+<CardGroup cols={2}>
+  <Card title="Contact Info" icon="address-card">
+    Email and location with hover effects
+  </Card>
+  <Card title="Social Links" icon="share-nodes">
+    LinkedIn, GitHub, Twitter, and WhatsApp with color-coded hover states
+  </Card>
+  <Card title="WhatsApp Form" icon="message">
+    Modal form with Zod validation and character limit
+  </Card>
+  <Card title="CTA Section" icon="phone">
+    Primary call-to-action for direct contact
+  </Card>
+</CardGroup>
+
+## Form Validation with Zod
+
+The WhatsApp form uses Zod for schema validation:
+
+```typescript
+const formWhatsAppSchema = z.object({
+  message: z
+    .string()
+    .min(10, { message: "A mensagem deve ter pelo menos 10 caracteres" })
+    .max(300, { message: "A mensagem deve ter no máximo 300 caracteres" })
+});
+
+type FormWhatsAppData = z.infer<typeof formWhatsAppSchema>;
+```
+
+<Note>
+Zod provides type-safe runtime validation with TypeScript inference, ensuring message length is between 10-300 characters.
+</Note>
+
+## React Hook Form Integration
+
+The form is managed with React Hook Form for optimal performance:
+
+```typescript
+const whatsAppForm = useForm<FormWhatsAppData>({
+  resolver: zodResolver(formWhatsAppSchema),
+  defaultValues: {
+    message: ""
+  }
+});
+
+const handleWhatsAppSubmit = useCallback(
+  (values: FormWhatsAppData) => {
+    const encodedMessage = encodeURIComponent(values.message);
+    const whatsappUrl = `https://wa.me/5565981278291?text=${encodedMessage}`;
+
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    whatsAppForm.reset();
+    setIsWhatsAppOpen(false);
+    toast.success(content.contact.i18n.whatsappDialog.successToast[lang]);
+  },
+  [whatsAppForm, lang]
+);
+```
+
+<Steps>
+  <Step title="Form Submission">
+    User enters message and submits form
+  </Step>
+  <Step title="Validation">
+    Zod schema validates message length (10-300 chars)
+  </Step>
+  <Step title="URL Encoding">
+    Message is URL-encoded to handle special characters
+  </Step>
+  <Step title="WhatsApp Opens">
+    New window opens with WhatsApp Web and pre-filled message
+  </Step>
+  <Step title="Form Reset">
+    Form clears and success toast appears
+  </Step>
+</Steps>
+
+## WhatsApp Dialog Component
+
+The form is displayed in a modal dialog:
+
+```tsx
+<Dialog open={isWhatsAppOpen} onOpenChange={setIsWhatsAppOpen}>
+  <DialogTrigger asChild>
+    <button
+      className="flex items-center gap-3 p-4 border hover:text-green-500 hover:border-green-500"
+      aria-label="Abrir conversa no WhatsApp"
+    >
+      <IoLogoWhatsapp className="w-5 h-5 group-hover:scale-110 transition-transform" />
+    </button>
+  </DialogTrigger>
+
+  <DialogContent className="sm:max-w-md">
+    <DialogHeader>
+      <DialogTitle className="flex items-center gap-2">
+        <IoLogoWhatsapp className="w-5 h-5 text-green-500" />
+        {content.contact.i18n.whatsappDialog.title[lang]}
+      </DialogTitle>
+      <DialogDescription>
+        {content.contact.i18n.whatsappDialog.description[lang]}
+      </DialogDescription>
+    </DialogHeader>
+
+    <Form {...whatsAppForm}>
+      <form onSubmit={whatsAppForm.handleSubmit(onWhatsAppSubmit)} className="space-y-4">
+        <FormField
+          control={whatsAppForm.control}
+          name="message"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  placeholder={content.contact.i18n.whatsappDialog.placeholder[lang]}
+                  className="min-h-[100px] focus:border-green-500 focus:ring-green-500"
+                />
+              </FormControl>
+              <FormMessage />
+              <div className="text-xs text-muted-foreground text-right">
+                {field.value?.length || 0}/{content.contact.i18n.whatsappDialog.charLimit[lang]}
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <Button
+          type="submit"
+          className="w-full bg-green-600 hover:bg-green-700 text-white"
+          size="lg"
+        >
+          <IoLogoWhatsapp className="w-4 h-4 mr-2" />
+          {content.contact.i18n.whatsappDialog.button[lang]}
+        </Button>
+      </form>
+    </Form>
+  </DialogContent>
+</Dialog>
+```
+
+<Tip>
+The character counter updates in real-time using `field.value?.length || 0` to show current message length.
+</Tip>
+
+## Contact Information Display
+
+Contact details are presented in interactive cards:
+
+```tsx
+<Card className="transition-all duration-300 rounded-none bg-transparent">
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <Mail className="w-5 h-5 text-primary" />
+      {content.contact.i18n.info.title[lang]}
+    </CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    {/* Email */}
+    <div className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors">
+      <div className="p-2 border">
+        <Mail className="w-4 h-4" />
+      </div>
+      <div>
+        <p className="font-medium text-sm text-muted-foreground">
+          {content.contact.i18n.info.emailLabel[lang]}
+        </p>
+        <a
+          href={`mailto:${CONTACT_INFO.email}`}
+          className="text-foreground hover:text-primary transition-colors font-medium"
+          aria-label="Enviar email"
+        >
+          {CONTACT_INFO.email}
+        </a>
+      </div>
+    </div>
+
+    {/* Location */}
+    <div className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors">
+      <div className="p-2 border">
+        <MapPin className="w-4 h-4" />
+      </div>
+      <div>
+        <p className="font-medium text-sm text-muted-foreground">
+          {content.contact.i18n.info.locationLabel[lang]}
+        </p>
+        <p className="text-foreground font-medium">{CONTACT_INFO.location}</p>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+```
+
+## Social Media Links
+
+Social links are displayed with dynamic icons and color-coded hover states:
+
+```typescript
+const getSocialIcon = (social: string) => {
+  switch (social) {
+    case "linkedin":
+      return <FaLinkedinIn className="w-5 h-5 group-hover:scale-110 transition-transform" />;
+    case "github":
+      return <FaGithub className="w-5 h-5 group-hover:scale-110 transition-transform" />;
+    case "twitter":
+      return <FaXTwitter className="w-5 h-5 group-hover:scale-110 transition-transform" />;
+  }
+};
+```
+
+```tsx
+{CONTACT_INFO.socialLinks.map((social) => (
+  <Link
+    key={social.id}
+    href={social.href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className={`flex items-center gap-3 p-4 border hover:border-current transition-all duration-200 hover:scale-105 ${social.color} group`}
+    aria-label={social.id}
+  >
+    {getSocialIcon(social.id)}
+  </Link>
+))}
+```
+
+## Content Configuration
+
+Contact content is stored in `content.json`:
+
+```json
+"contact": {
+  "static": {
+    "email": "thalyson.rafael.ribeiro@gmail.com",
+    "location": "Cuiabá, MT - Brasil",
+    "socialLinks": [
+      {
+        "id": "linkedin",
+        "href": "https://www.linkedin.com/in/thalyson-rafael-br",
+        "color": "hover:text-blue-600"
+      },
+      {
+        "id": "github",
+        "href": "https://github.com/ThalysonRibeiro",
+        "color": "hover:text-gray-400"
+      },
+      {
+        "id": "twitter",
+        "href": "https://twitter.com/yourusername",
+        "color": "hover:text-sky-500"
+      }
+    ]
+  },
+  "i18n": {
+    "title": { "ptBR": "Entre em contato", "en": "Get in touch" },
+    "description": {
+      "ptBR": "Estou sempre aberto a novos projetos e oportunidades. Vamos conversar!",
+      "en": "I'm always open to new projects and opportunities. Let's talk!"
+    },
+    "whatsappDialog": {
+      "title": { "ptBR": "Mensagem via WhatsApp", "en": "WhatsApp Message" },
+      "description": {
+        "ptBR": "Envie uma mensagem rápida. Vou responder em breve!",
+        "en": "Send a quick message. I'll respond soon!"
+      },
+      "placeholder": {
+        "ptBR": "Digite sua mensagem aqui...",
+        "en": "Type your message here..."
+      },
+      "button": { "ptBR": "Abrir no WhatsApp", "en": "Open in WhatsApp" },
+      "charLimit": { "ptBR": "300", "en": "300" },
+      "successToast": {
+        "ptBR": "Abrindo WhatsApp...",
+        "en": "Opening WhatsApp..."
+      }
+    }
+  }
+}
+```
+
+## Animation Configuration
+
+```typescript
+const ANIMATION_CONFIG = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1
+      }
+    }
+  },
+  item: {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 20,
+        stiffness: 100
+      }
+    }
+  }
+} as const;
+```
+
+## Call-to-Action Section
+
+The primary CTA encourages immediate contact:
+
+```tsx
+<Card className="glass-card bg-transparent rounded-none border-t-0 py-8">
+  <CardContent>
+    <div className="text-center space-y-4">
+      <h3 className="font-bold text-2xl">
+        {content.contact.i18n.cta.title[lang]}
+      </h3>
+      <p className="text-muted-foreground text-base max-w-xl mx-auto">
+        {content.contact.i18n.cta.description[lang]}
+      </p>
+      <Button asChild size="lg" className="bg-primary hover:opacity-90">
+        <Link href="https://wa.me/5565981278291" target="_blank">
+          {content.contact.i18n.cta.button[lang]}
+        </Link>
+      </Button>
+    </div>
+  </CardContent>
+</Card>
+```
+
+## Customization Guide
+
+<Accordion title="Change Contact Information">
+  Update `content.json` under `contact.static`:
+  
+  ```json
+  "static": {
+    "email": "your.email@example.com",
+    "location": "Your City, Country",
+    "socialLinks": [
+      {
+        "id": "linkedin",
+        "href": "https://linkedin.com/in/yourprofile",
+        "color": "hover:text-blue-600"
+      }
+    ]
+  }
+  ```
+</Accordion>
+
+<Accordion title="Modify Form Validation">
+  Edit the Zod schema in `contact.tsx:29`:
+  
+  ```typescript
+  const formWhatsAppSchema = z.object({
+    message: z
+      .string()
+      .min(20, { message: "Message must be at least 20 characters" })
+      .max(500, { message: "Message must be at most 500 characters" })
+  });
+  ```
+</Accordion>
+
+<Accordion title="Change WhatsApp Number">
+  Update the phone number in `contact.tsx:79`:
+  
+  ```typescript
+  const whatsappUrl = `https://wa.me/YOUR_COUNTRY_CODE_AND_NUMBER?text=${encodedMessage}`;
+  ```
+</Accordion>
+
+<Accordion title="Add New Social Links">
+  1. Add to `content.json` under `contact.static.socialLinks`
+  2. Add icon mapping in `getSocialIcon` function
+  3. Define hover color class
+</Accordion>
+
+<Accordion title="Customize Success Toast">
+  The toast uses the `sonner` library. Modify the message in `contact.tsx:84`:
+  
+  ```typescript
+  toast.success("Your custom success message");
+  ```
+  
+  You can also use `toast.error()` or `toast.info()` for different types.
+</Accordion>
+
+## Email Integration (Future Enhancement)
+
+<Warning>
+Currently, the portfolio uses WhatsApp for direct contact. To add email form submission, you would need to:
+
+1. Create an API route (e.g., `/api/contact`)
+2. Integrate with an email service (SendGrid, Resend, etc.)
+3. Add SMTP configuration or use a transactional email provider
+4. Update the form to POST to the API endpoint
+
+Example API route structure:
+
+```typescript
+// src/app/api/contact/route.ts
+import { NextResponse } from 'next/server';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function POST(request: Request) {
+  const { name, email, message } = await request.json();
+  
+  await resend.emails.send({
+    from: 'contact@yourdomain.com',
+    to: 'your.email@example.com',
+    subject: `New contact from ${name}`,
+    text: message
+  });
+  
+  return NextResponse.json({ success: true });
+}
+```
+</Warning>
+
+## Accessibility Features
+
+<Note>
+The Contact component includes:
+- ARIA labels for all interactive elements
+- Keyboard navigation support
+- Focus management in modal dialogs
+- Error messages announced to screen readers
+- Semantic HTML structure
+- Color contrast ratios meeting WCAG AA standards
+</Note>

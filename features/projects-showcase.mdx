@@ -1,0 +1,389 @@
+---
+title: 'Projects Showcase'
+description: 'Display your portfolio projects with image carousels, tech stacks, and live demo links'
+icon: 'briefcase'
+---
+
+## Overview
+
+The Projects component showcases portfolio work with featured project cards, image carousels, tech stack badges, and multiple link types (live demo, GitHub, case studies).
+
+## Component Location
+
+```
+src/components/projects.tsx
+src/components/carousel-image-projects.tsx
+```
+
+## Project Display Structure
+
+The component renders three types of project displays:
+
+<CardGroup cols={3}>
+  <Card title="Featured Cards" icon="star">
+    Large featured projects like Vexiun with detailed metrics and impact highlights
+  </Card>
+  <Card title="Theme Projects" icon="palette">
+    Sub-projects (e.g., VSCode themes) with grid layouts and marketplace links
+  </Card>
+  <Card title="Standard Cards" icon="folder">
+    Regular project cards with carousel, description, and action buttons
+  </Card>
+</CardGroup>
+
+## Animation Configuration
+
+```typescript
+const ANIMATION_CONFIG = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  },
+  item: {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 20,
+        stiffness: 100
+      }
+    }
+  }
+} as const;
+```
+
+## Project Data Structure
+
+Projects are defined in `content.json` with this structure:
+
+```json
+{
+  "id": "02",
+  "title": "Equilibrium Center",
+  "projectType": "Fullstack",
+  "category": { 
+    "ptBR": "Gestão / Saúde", 
+    "en": "Management / Health" 
+  },
+  "description": {
+    "ptBR": "Plataforma completa de gestão para massoterapeutas: agendamento, clientes e organização do atendimento.",
+    "en": "A complete management platform for massage therapists: scheduling, clients, and service organization."
+  },
+  "tech": [
+    "Next.js",
+    "TypeScript",
+    "shadcn",
+    "TailwindCSS",
+    "React Hook Form",
+    "Zod",
+    "PostgreSQL (Neon)",
+    "Prisma",
+    "Vercel",
+    "Docker",
+    "Stripe",
+    "Cloudinary",
+    "Auth.js"
+  ],
+  "links": {
+    "github": "https://github.com/ThalysonRibeiro/equilibrium-center",
+    "githubBackend": "",
+    "app": "",
+    "live": "https://equilibrium-center.vercel.app"
+  },
+  "images": [
+    { "title": "Equilibrium-Center-photo-1", "image": "/eq-center/1.webp" },
+    { "title": "Equilibrium-Center-photo-2", "image": "/eq-center/2.webp" },
+    { "title": "Equilibrium-Center-photo-3", "image": "/eq-center/3.webp" }
+  ]
+}
+```
+
+<Note>
+All project data is centralized in `src/utils/content.json` under the `projectsData` array.
+</Note>
+
+## Image Carousel Component
+
+The carousel is a standalone component with auto-play and manual navigation:
+
+### Key Features
+
+<Steps>
+  <Step title="Auto-play with Pause">
+    Automatically cycles through images every 3 seconds
+    
+    ```typescript
+    useEffect(() => {
+      if (isPaused) return;
+      const interval = setInterval(nextSlide, 3000);
+      return () => clearInterval(interval);
+    }, [nextSlide, isPaused]);
+    ```
+  </Step>
+  
+  <Step title="Image Preloading">
+    Preloads all images to prevent flickering during transitions
+    
+    ```typescript
+    useEffect(() => {
+      const imagePromises = images.map((item) => {
+        return new Promise((resolve, reject) => {
+          const img = new window.Image();
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = item.image;
+        });
+      });
+      Promise.all(imagePromises)
+        .then(() => setIsLoaded(true))
+        .catch(() => setIsLoaded(true));
+    }, [images]);
+    ```
+  </Step>
+  
+  <Step title="Pause on Hover/Focus">
+    Pauses auto-play when user interacts with carousel
+    
+    ```tsx
+    <div
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={() => setIsPaused(false)}
+    >
+    ```
+  </Step>
+</Steps>
+
+## Project Card Component
+
+The `ProjectCard` is a memoized component for performance:
+
+```typescript
+const ProjectCard = memo(({ project, lang }: ProjectCardProps) => {
+  const projectLinks = useMemo(() => getProjectLinks(project, lang), [project, lang]);
+
+  return (
+    <motion.article
+      variants={ANIMATION_CONFIG.item}
+      className="h-full group"
+      role="article"
+      aria-labelledby={`project-title-${project.id}`}
+    >
+      <Card className="h-full p-0 relative bg-zinc-950/20 hover:bg-zinc-900/60">
+        {/* Image Carousel */}
+        <Carousel images={project.images} />
+        
+        {/* Project Details */}
+        <div className="p-5 flex flex-col flex-1 space-y-4">
+          <CardTitle>{project.title}</CardTitle>
+          <CardDescription>{project.description[lang]}</CardDescription>
+          
+          {/* Tech Stack Badges */}
+          <div className="flex flex-wrap gap-1.5">
+            {project.tech.map((tech) => (
+              <Badge key={tech} variant="secondary">{tech}</Badge>
+            ))}
+          </div>
+          
+          {/* Action Buttons */}
+          {projectLinks.map((link) => (
+            <Button asChild>
+              <Link href={link.href} target="_blank">
+                {link.label}
+              </Link>
+            </Button>
+          ))}
+        </div>
+      </Card>
+    </motion.article>
+  );
+});
+```
+
+<Tip>
+The `memo` wrapper prevents unnecessary re-renders when parent component updates.
+</Tip>
+
+## Dynamic Link Generation
+
+The `getProjectLinks` function generates appropriate links based on available URLs:
+
+```typescript
+function getProjectLinks(project, lang): ProjectLink[] {
+  const links: ProjectLink[] = [
+    {
+      href: project.links.live,
+      label: content.projects.labels.liveDemo[lang],
+      icon: Eye,
+      ariaLabel: `Ver demonstração ao vivo do projeto ${project.title}`
+    }
+  ];
+  
+  if (project.links.github) {
+    links.push({
+      href: project.links.github,
+      label: content.projects.labels.frontend[lang],
+      icon: FaGithub
+    });
+  }
+  
+  if (project.links.githubBackend) {
+    links.push({
+      href: project.links.githubBackend,
+      label: content.projects.labels.backend[lang],
+      icon: FaGithub
+    });
+  }
+  
+  if (project.links.app) {
+    links.push({
+      href: project.links.app,
+      label: content.projects.labels.downloadApp[lang],
+      icon: ArrowBigDown
+    });
+  }
+  
+  return links;
+}
+```
+
+## Featured Project: Vexiun
+
+The `VexiunCard` component showcases a major project with enhanced visuals:
+
+```tsx
+export function VexiunCard({ lang }: { lang: Lang }) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2">
+      {/* Hero Image */}
+      <div className="relative aspect-video">
+        <Image
+          src="/vexiun.cap-1.webp"
+          alt="Vexiun Dashboard Preview"
+          fill
+          className="object-contain transition-transform duration-700 group-hover:scale-105"
+        />
+        <div className="absolute left-4 top-4">
+          <span className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1">
+            <span className="h-1.5 w-1.5 animate-pulse bg-primary" />
+            {content.vexiunData.i18n[lang].status}
+          </span>
+        </div>
+      </div>
+      
+      {/* Impact Metrics */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {content.vexiunData.i18n[lang].impactMetrics.map((metric) => (
+          <div key={metric.value}>
+            <span className="text-2xl font-bold text-primary">
+              {metric.value} <span className="text-[10px]">{metric.label}</span>
+            </span>
+            <span className="text-[10px] text-zinc-400">{metric.detail}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## How to Add New Projects
+
+<Steps>
+  <Step title="Add Images">
+    Place project images in the `public/` directory:
+    
+    ```bash
+    public/
+    └── my-project/
+        ├── 1.webp
+        ├── 2.webp
+        └── 3.webp
+    ```
+  </Step>
+  
+  <Step title="Update content.json">
+    Add a new entry to the `projectsData` array:
+    
+    ```json
+    {
+      "id": "04",
+      "title": "My New Project",
+      "projectType": "Fullstack",
+      "category": { "ptBR": "Categoria", "en": "Category" },
+      "description": {
+        "ptBR": "Descrição em português",
+        "en": "English description"
+      },
+      "tech": ["Next.js", "TypeScript", "PostgreSQL"],
+      "links": {
+        "github": "https://github.com/username/repo",
+        "live": "https://myproject.com"
+      },
+      "images": [
+        { "title": "Screenshot 1", "image": "/my-project/1.webp" },
+        { "title": "Screenshot 2", "image": "/my-project/2.webp" }
+      ]
+    }
+    ```
+  </Step>
+  
+  <Step title="Test Locally">
+    The project will automatically appear in the grid:
+    
+    ```bash
+    npm run dev
+    # Navigate to /#projects
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+Make sure all image paths are correct and images are optimized (WebP format recommended for best performance).
+</Warning>
+
+## Customization Options
+
+<Accordion title="Change Grid Layout">
+  Modify the grid configuration in `projects.tsx:102`:
+  
+  ```tsx
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  ```
+</Accordion>
+
+<Accordion title="Adjust Carousel Speed">
+  Change the interval in `carousel-image-projects.tsx:29`:
+  
+  ```typescript
+  const interval = setInterval(nextSlide, 3000); // 3 seconds
+  ```
+</Accordion>
+
+<Accordion title="Customize Card Hover Effects">
+  Edit the card className in `projects.tsx:164`:
+  
+  ```tsx
+  className="bg-zinc-950/20 hover:bg-zinc-900/60 transition-all duration-300"
+  ```
+</Accordion>
+
+## Accessibility
+
+<Note>
+The Projects component includes:
+- Semantic HTML with `<article>` and `role="list"`
+- ARIA labels for all interactive elements
+- Keyboard-accessible carousel controls
+- Alt text for all images
+- Focus management for modal interactions
+</Note>

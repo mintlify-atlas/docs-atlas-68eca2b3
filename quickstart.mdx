@@ -1,80 +1,283 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Get Thalyson's Portfolio running on your local machine in under 5 minutes with this step-by-step guide.
 ---
 
-## Get started in three steps
+## Get Started in 5 Minutes
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+This quick start guide will have you running the portfolio locally in no time. Follow these simple steps to clone, install, and run the project.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+**Prerequisites**: Make sure you have Node.js 20 or later installed on your machine. You'll also need npm, yarn, or pnpm as your package manager.
 </Note>
+
+## Quick Start Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    First, clone the repository from GitHub to your local machine:
+
+    ```bash
+    git clone https://github.com/ThalysonRibeiro/my-portfolio-fullstack.git
+    cd my-portfolio-fullstack
+    ```
+
+    This downloads all the source code and creates a new directory called `my-portfolio-fullstack`.
+
+    <Tip>
+    If you plan to create your own version, consider forking the repository first on GitHub, then clone your fork instead.
+    </Tip>
+  </Step>
+
+  <Step title="Install Dependencies">
+    Install all required packages using your preferred package manager:
+
+    <CodeGroup>
+    ```bash npm
+    npm install
+    ```
+
+    ```bash yarn
+    yarn install
+    ```
+
+    ```bash pnpm
+    pnpm install
+    ```
+    </CodeGroup>
+
+    This installs all dependencies listed in `package.json`, including:
+    - Next.js 16 and React 19
+    - Tailwind CSS 4 and Radix UI components
+    - Framer Motion for animations
+    - React Hook Form and Zod for form handling
+    - And many more...
+
+    <Note>
+    Installation typically takes 1-3 minutes depending on your internet connection and package manager.
+    </Note>
+  </Step>
+
+  <Step title="Run the Development Server">
+    Start the development server with Turbopack for ultra-fast hot reloading:
+
+    <CodeGroup>
+    ```bash npm
+    npm run dev
+    ```
+
+    ```bash yarn
+    yarn dev
+    ```
+
+    ```bash pnpm
+    pnpm dev
+    ```
+    </CodeGroup>
+
+    The development server starts on port 3000 by default. You'll see output like:
+
+    ```
+    ▲ Next.js 16.1.5
+    - Local:        http://localhost:3000
+    - Turbopack:    enabled
+
+    ✓ Starting...
+    ✓ Ready in 1.2s
+    ```
+
+    <Tip>
+    The `dev` script uses Turbopack (`next dev --turbopack`) for significantly faster build times compared to Webpack.
+    </Tip>
+  </Step>
+
+  <Step title="View in Browser">
+    Open your browser and navigate to:
+
+    ```
+    http://localhost:3000
+    ```
+
+    You should see the portfolio homepage with:
+    - **Hero Section**: Introduction and call-to-action
+    - **About Section**: Professional background and skills
+    - **Projects Section**: Showcase of work with interactive cards
+    - **Contact Form**: Functional contact form with validation
+    - **GitHub Stats**: Dynamic statistics from GitHub
+    - **Footer**: Links and additional information
+
+    <Note>
+    The first load might take a moment as Next.js compiles the pages. Subsequent navigation is instant thanks to the App Router.
+    </Note>
+  </Step>
+
+  <Step title="Start Customizing">
+    Now that everything is running, you can start making it your own! Here are some quick wins:
+
+    **Content Updates**:
+    - Edit `src/utils/content.json` to update text content and metadata
+    - Modify `src/app/layout.tsx` to change site metadata and SEO settings
+
+    **Styling Changes**:
+    - Update Tailwind configuration in `tailwind.config.ts` (if present) for theme customization
+    - Edit component styles in `src/components/` directories
+
+    **Component Modifications**:
+    - Customize hero section in `src/components/hero.tsx`
+    - Update header navigation in `src/components/header.tsx`
+    - Modify project cards in `src/components/projects.tsx`
+
+    <Tip>
+    With Turbopack enabled, changes you make appear almost instantly in the browser - no need to refresh!
+    </Tip>
+  </Step>
+</Steps>
+
+## What You Just Installed
+
+Your development environment now includes:
+
+### Core Framework
+- **Next.js 16** with App Router and Turbopack
+- **React 19** with latest features
+- **TypeScript 5** for type safety
+
+### UI Components
+- **Tailwind CSS 4** for styling
+- **Radix UI** accessible components
+- **Framer Motion** animations
+- **Lucide React** icons
+
+### Development Tools
+- **ESLint** for code quality
+- **Prettier** for code formatting
+- **TypeScript** compiler
+
+## Available Scripts
+
+Here are the npm scripts you can use during development:
+
+<CodeGroup>
+```bash Development Server
+npm run dev
+# Starts Next.js development server with Turbopack
+# Available at http://localhost:3000
+```
+
+```bash Production Build
+npm run build
+# Creates an optimized production build
+# Outputs to .next directory
+```
+
+```bash Start Production
+npm start
+# Runs the production build
+# Must run 'npm run build' first
+```
+
+```bash Lint Code
+npm run lint
+# Runs ESLint to check for code issues
+# Automatically checks Next.js specific rules
+```
+
+```bash Format Code
+npm run format
+# Runs Prettier to format all files
+# Formats according to .prettierrc config
+```
+</CodeGroup>
+
+## Verify Your Installation
+
+Let's make sure everything is working correctly:
+
+<Steps>
+  <Step title="Check the Homepage">
+    Navigate to `http://localhost:3000` and verify the page loads without errors.
+  </Step>
+
+  <Step title="Test Hot Reload">
+    Open `src/app/page.tsx` and make a small change. Save the file and confirm the browser updates automatically.
+  </Step>
+
+  <Step title="Test Navigation">
+    Click on navigation links in the header. Pages should load instantly without full page refreshes.
+  </Step>
+
+  <Step title="Check Console">
+    Open browser developer tools (F12) and check the console for any errors. A clean installation should have no errors.
+  </Step>
+</Steps>
+
+<Warning>
+If you encounter any errors during installation or startup, check the [Installation Guide](/installation) for detailed troubleshooting steps.
+</Warning>
+
+## Next Steps
+
+Now that you have the portfolio running:
+
+<CardGroup cols={2}>
+  <Card title="Detailed Installation" icon="book" href="/installation">
+    Learn about prerequisites, environment variables, and troubleshooting
+  </Card>
+  <Card title="Project Structure" icon="folder-tree" href="/development/project-structure">
+    Understand the codebase organization and architecture
+  </Card>
+  <Card title="Customization Guide" icon="palette" href="/customization/content-management">
+    Make the portfolio your own with custom content and styling
+  </Card>
+  <Card title="Deployment" icon="rocket" href="/development/deployment-guide">
+    Deploy your portfolio to production on Vercel or other platforms
+  </Card>
+</CardGroup>
+
+## Common Quick Start Issues
+
+<AccordionGroup>
+  <Accordion title="Port 3000 is already in use">
+    If port 3000 is occupied, you can specify a different port:
+    
+    ```bash
+    PORT=3001 npm run dev
+    ```
+    
+    Then access the site at `http://localhost:3001`
+  </Accordion>
+
+  <Accordion title="Installation fails with permission errors">
+    If you get EACCES errors during installation:
+    
+    ```bash
+    # On macOS/Linux, avoid using sudo
+    # Instead, fix npm permissions:
+    npm config set prefix ~/.npm-global
+    export PATH=~/.npm-global/bin:$PATH
+    ```
+  </Accordion>
+
+  <Accordion title="Module not found errors">
+    If you see module not found errors after installation:
+    
+    ```bash
+    # Clear node_modules and reinstall
+    rm -rf node_modules package-lock.json
+    npm install
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+If you run into issues:
+
+1. Check the [Installation Guide](/installation) for detailed troubleshooting
+2. Review the [GitHub Issues](https://github.com/ThalysonRibeiro/my-portfolio-fullstack/issues)
+3. Ensure you're using Node.js 20 or later: `node --version`
+4. Try clearing your cache: `rm -rf .next`
+
+<Tip>
+The Next.js and React communities are very active. If you encounter framework-specific issues, the [Next.js documentation](https://nextjs.org/docs) is an excellent resource.
+</Tip>

@@ -1,0 +1,324 @@
+---
+title: Environment Setup
+description: Configure your development environment for Thalyson's Portfolio
+icon: 'gear'
+---
+
+## Overview
+
+This guide covers setting up your development environment for Thalyson's Portfolio, including Node.js requirements, environment variables, and development tools configuration.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Node.js and npm">
+    Install Node.js (version 20 or higher recommended) and npm. Check your version:
+    
+    ```bash
+    node --version
+    npm --version
+    ```
+  </Step>
+
+  <Step title="Clone the Repository">
+    Clone the repository and install dependencies:
+    
+    ```bash
+    git clone <repository-url>
+    cd <project-directory>
+    npm install
+    ```
+  </Step>
+
+  <Step title="Environment Variables">
+    Create a `.env.local` file in the root directory with the required environment variables (see below).
+  </Step>
+</Steps>
+
+## Environment Variables
+
+The application uses environment variables for configuration. Create a `.env.local` file in the root directory:
+
+<CodeGroup>
+```bash .env.local
+# Site Configuration
+NEXT_PUBLIC_URL=http://localhost:3000
+
+# Google Analytics (Optional)
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+
+# Bundle Analyzer (Optional)
+ANALYZE=false
+```
+</CodeGroup>
+
+### Environment Variable Reference
+
+| Variable | Description | Required | Default |
+|----------|-------------|----------|----------|
+| `NEXT_PUBLIC_URL` | Base URL of your site | Yes | `http://localhost:3000` |
+| `NEXT_PUBLIC_GA_ID` | Google Analytics Tracking ID | No | - |
+| `ANALYZE` | Enable bundle analyzer | No | `false` |
+
+<Note>
+Environment variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Never store sensitive secrets with this prefix.
+</Note>
+
+<Warning>
+Make sure to update `NEXT_PUBLIC_URL` to your production domain before deploying.
+</Warning>
+
+## Next.js Configuration
+
+The project uses a custom Next.js configuration located in `next.config.ts`:
+
+<CodeGroup>
+```typescript next.config.ts
+import type { NextConfig } from "next";
+
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
+
+const nextConfig: NextConfig = {
+  /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com"
+      }
+    ]
+  }
+};
+
+export default withBundleAnalyzer(nextConfig);
+```
+</CodeGroup>
+
+### Key Configuration Features
+
+- **Bundle Analyzer**: Enabled via `ANALYZE=true` environment variable
+- **Image Optimization**: Configured for Cloudinary remote images
+- **Turbopack**: Development mode uses Turbopack for faster builds
+
+<Tip>
+Run `ANALYZE=true npm run build` to visualize your bundle size and optimize your application.
+</Tip>
+
+## TypeScript Configuration
+
+The project uses TypeScript with strict mode enabled. Configuration in `tsconfig.json`:
+
+<CodeGroup>
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}
+```
+</CodeGroup>
+
+### TypeScript Features
+
+- **Strict Mode**: Enabled for better type safety
+- **Path Aliases**: Use `@/` to import from the `src` directory
+- **Next.js Plugin**: Provides type definitions for Next.js features
+- **JSX Support**: Configured for React JSX transformation
+
+## ESLint Configuration
+
+The project uses ESLint with Next.js recommended rules. Configuration in `eslint.config.mjs`:
+
+<CodeGroup>
+```javascript eslint.config.mjs
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname
+});
+
+const eslintConfig = [
+  ...compat.extends("next/core-web-vitals", "next/typescript")
+];
+
+export default eslintConfig;
+```
+</CodeGroup>
+
+### Linting
+
+Run ESLint to check for code quality issues:
+
+```bash
+npm run lint
+```
+
+<Note>
+ESLint is integrated with Prettier for consistent code formatting. The configuration uses `eslint-config-prettier` to prevent conflicts.
+</Note>
+
+## Prettier Configuration
+
+Code formatting is handled by Prettier. Configuration in `.prettierrc`:
+
+<CodeGroup>
+```json .prettierrc
+{
+  "semi": true,
+  "singleQuote": false,
+  "printWidth": 100,
+  "tabWidth": 2,
+  "trailingComma": "none"
+}
+```
+</CodeGroup>
+
+### Formatting
+
+Format your code with Prettier:
+
+```bash
+npm run format
+```
+
+<Tip>
+Consider enabling "Format on Save" in your editor to automatically format code as you work.
+</Tip>
+
+## Development Workflow
+
+<Steps>
+  <Step title="Start Development Server">
+    Run the development server with Turbopack:
+    
+    ```bash
+    npm run dev
+    ```
+    
+    Your application will be available at `http://localhost:3000`.
+  </Step>
+
+  <Step title="Make Changes">
+    Edit files in the `src` directory. Changes will hot-reload automatically.
+  </Step>
+
+  <Step title="Lint and Format">
+    Before committing, ensure your code is properly formatted and linted:
+    
+    ```bash
+    npm run format
+    npm run lint
+    ```
+  </Step>
+
+  <Step title="Build for Production">
+    Test a production build locally:
+    
+    ```bash
+    npm run build
+    npm run start
+    ```
+  </Step>
+</Steps>
+
+## Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server with Turbopack |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run format` | Format code with Prettier |
+
+## Editor Setup
+
+### VS Code (Recommended)
+
+Install these extensions for the best development experience:
+
+- **ESLint**: Integrates ESLint into VS Code
+- **Prettier**: Code formatter
+- **Tailwind CSS IntelliSense**: Autocomplete for Tailwind classes
+- **TypeScript and JavaScript Language Features**: Built-in TypeScript support
+
+### Settings
+
+Add to your `.vscode/settings.json`:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib"
+}
+```
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 3000 is already in use, specify a different port:
+
+```bash
+PORT=3001 npm run dev
+```
+
+### Module Not Found
+
+If you encounter module not found errors, try reinstalling dependencies:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### TypeScript Errors
+
+Restart your TypeScript server in VS Code:
+
+1. Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
+2. Type "TypeScript: Restart TS Server"
+3. Press Enter
+
+<Warning>
+Always use Node.js version 20 or higher. Lower versions may cause compatibility issues with Next.js 16 and React 19.
+</Warning>

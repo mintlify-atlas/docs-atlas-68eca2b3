@@ -1,0 +1,229 @@
+---
+title: 'Component Architecture'
+description: 'Overview of component architecture, design system, and composition patterns in Thalyson Portfolio'
+icon: 'boxes'
+---
+
+## Component Architecture Overview
+
+Thalyson's Portfolio is built with a modern React component architecture using Next.js 14, TypeScript, and a carefully curated UI component library based on Radix UI primitives.
+
+## Directory Structure
+
+The component architecture is organized into several key directories:
+
+```bash
+src/components/
+├── ui/                    # UI primitive components (Radix UI + Tailwind)
+│   ├── button.tsx
+│   ├── card.tsx
+│   ├── badge.tsx
+│   ├── dialog.tsx
+│   ├── dropdown-menu.tsx
+│   ├── form.tsx
+│   ├── input.tsx
+│   ├── label.tsx
+│   ├── select.tsx
+│   ├── sheet.tsx
+│   └── textarea.tsx
+├── Squares.tsx            # Animated background component
+├── github-stats.tsx       # GitHub statistics display
+├── hero.tsx               # Hero section
+├── projects.tsx           # Projects showcase
+├── about.tsx              # About section
+├── contact.tsx            # Contact form
+├── header.tsx             # Site header
+├── footer.tsx             # Site footer
+└── animated-number.tsx    # Number animation utility
+```
+
+## Component Categories
+
+### UI Primitives (`/ui`)
+
+Core reusable UI components built on top of Radix UI:
+
+- **Form Controls**: Button, Input, Textarea, Select, Label
+- **Layout**: Card, Sheet, Dialog
+- **Feedback**: Badge
+- **Navigation**: Dropdown Menu
+- **Form Management**: Form (React Hook Form integration)
+
+### Feature Components
+
+Domain-specific components that compose UI primitives:
+
+- **Hero**: Landing section with animated background and CTA buttons
+- **Projects**: Project showcase with carousel and filtering
+- **GitHub Stats**: Real-time GitHub statistics with animated numbers
+- **Contact**: Form with validation and email integration
+- **About**: Personal information and skills display
+
+### Utility Components
+
+- **Squares**: Canvas-based animated grid background
+- **AnimatedNumber**: Smooth number animation component
+- **Background**: Gradient background effects
+
+## Design System
+
+### Radix UI Foundation
+
+All UI components are built on [Radix UI](https://www.radix-ui.com/) primitives, providing:
+
+<CardGroup cols={2}>
+  <Card title="Accessibility" icon="universal-access">
+    ARIA-compliant components with keyboard navigation and screen reader support out of the box
+  </Card>
+  <Card title="Unstyled Primitives" icon="paintbrush">
+    Headless components that give full control over styling with Tailwind CSS
+  </Card>
+  <Card title="Composability" icon="puzzle-piece">
+    Small, focused components that can be composed into complex UI patterns
+  </Card>
+  <Card title="Type Safety" icon="shield-check">
+    Full TypeScript support with proper type inference
+  </Card>
+</CardGroup>
+
+### Styling Approach
+
+Components use a consistent styling strategy:
+
+1. **Tailwind CSS**: Utility-first CSS framework for rapid UI development
+2. **class-variance-authority (CVA)**: Type-safe variant management
+3. **cn() utility**: Conditional className merging with `clsx` and `tailwind-merge`
+
+```typescript title="src/components/ui/button.tsx"
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all...",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        destructive: "bg-destructive text-white shadow-xs hover:bg-destructive/90",
+        outline: "border bg-background shadow-xs hover:bg-accent",
+        secondary: "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline"
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9"
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default"
+    }
+  }
+);
+```
+
+## Component Composition Patterns
+
+### Compound Components
+
+Many components follow the compound component pattern for flexibility:
+
+```tsx
+<Card>
+  <CardHeader>
+    <CardTitle>Project Title</CardTitle>
+    <CardDescription>Brief description</CardDescription>
+    <CardAction>
+      <Button>Action</Button>
+    </CardAction>
+  </CardHeader>
+  <CardContent>
+    {/* Main content */}
+  </CardContent>
+  <CardFooter>
+    {/* Footer actions */}
+  </CardFooter>
+</Card>
+```
+
+### Slot Pattern
+
+Components use Radix's `Slot` component for polymorphic behavior:
+
+```tsx
+// Renders as a link when asChild is true
+<Button asChild>
+  <Link href="/features/projects-showcase">View Projects</Link>
+</Button>
+```
+
+### Data Attribute Pattern
+
+Components use data attributes for CSS selectors and state management:
+
+```tsx
+<Button
+  data-slot="button"
+  data-variant={variant}
+  className={cn(buttonVariants({ variant, size, className }))}
+>
+  {children}
+</Button>
+```
+
+## Animation Strategy
+
+The portfolio uses [Framer Motion](https://www.framer.com/motion/) for animations:
+
+```typescript title="Hero Animation Config"
+const ANIMATION_CONFIG = {
+  container: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1
+      }
+    }
+  },
+  item: {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 20,
+        stiffness: 100
+      }
+    }
+  }
+};
+```
+
+## Type Safety
+
+All components are fully typed with TypeScript:
+
+- **React.ComponentProps**: Type extraction from HTML elements
+- **VariantProps**: CVA variant type inference
+- **Generic Components**: Type-safe form components with React Hook Form
+
+<Tip>
+The component architecture prioritizes composition over inheritance, making it easy to build complex UIs from simple, reusable primitives.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="UI Components" icon="palette" href="/components/ui-components">
+    Explore the complete UI component library with usage examples
+  </Card>
+  <Card title="Animated Background" icon="sparkles" href="/components/animated-background">
+    Learn about the canvas-based animated grid system
+  </Card>
+  <Card title="GitHub Stats" icon="github" href="/components/github-stats">
+    Understand the GitHub statistics integration
+  </Card>
+</CardGroup>

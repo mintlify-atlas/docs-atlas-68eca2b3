@@ -1,0 +1,564 @@
+---
+title: 'Content Management'
+description: 'Manage portfolio content using the centralized JSON configuration system'
+icon: 'file-json'
+---
+
+## Overview
+
+Thalyson's Portfolio uses a centralized **`content.json`** file located at `src/utils/content.json` to manage all text content, navigation, project data, and metadata. This approach provides:
+
+- **Single source of truth** for all portfolio content
+- **Bilingual support** (Portuguese BR and English)
+- **Easy content updates** without touching component code
+- **Type-safe content** when consumed by React components
+
+<Note>
+The content management system separates content from presentation logic, making it easy to update portfolio information without modifying React components.
+</Note>
+
+---
+
+## Content Structure
+
+The `content.json` file is organized into logical sections that map to portfolio components:
+
+```json
+{
+  "header": { /* Navigation links */ },
+  "hero": { /* Landing section */ },
+  "about": { /* About me section */ },
+  "projects": { /* Projects metadata */ },
+  "projectsData": [ /* Project entries */ ],
+  "vexiunData": { /* Featured project */ },
+  "technicalDecisions": { /* Architecture highlights */ },
+  "contact": { /* Contact information */ },
+  "footer": { /* Footer links */ },
+  "metadata": { /* SEO metadata */ }
+}
+```
+
+---
+
+## Bilingual Content
+
+All user-facing text supports both Portuguese (BR) and English:
+
+<CodeGroup>
+
+```json Hero Example
+{
+  "hero": {
+    "role": {
+      "ptBR": "Full-stack Developer • Product Builder",
+      "en": "Full-stack Developer • Product Builder"
+    },
+    "hello": { "ptBR": "Olá, eu sou", "en": "Hi, I'm" },
+    "name": "Thalyson Rafael",
+    "tagline": {
+      "ptBR": "Transformo visão técnica em produtos escaláveis e experiências de alto impacto.",
+      "en": "I turn technical vision into scalable products and high-impact experiences."
+    }
+  }
+}
+```
+
+```tsx Component Usage
+import content from "@/utils/content.json";
+import { useLanguageStore } from "@/store/language-store";
+import { translate } from "@/utils/i18n";
+
+export function Hero() {
+  const { lang } = useLanguageStore();
+  
+  return (
+    <h1>{translate(content.hero.hello, lang)} {content.hero.name}</h1>
+  );
+}
+```
+
+</CodeGroup>
+
+<Tip>
+The `translate()` helper function automatically selects the correct language version based on the current language state managed by Zustand.
+</Tip>
+
+---
+
+## Key Content Sections
+
+### Header Navigation
+
+Defines the main navigation menu items:
+
+```json src/utils/content.json
+{
+  "header": {
+    "ariaLabel": { "ptBR": "Navegação principal", "en": "Main navigation" },
+    "nav": [
+      { "id": "home", "label": { "ptBR": "Início", "en": "Home" } },
+      { "id": "projects", "label": { "ptBR": "Projetos", "en": "Projects" } },
+      { "id": "about", "label": { "ptBR": "Sobre", "en": "About" } },
+      { "id": "contact", "label": { "ptBR": "Contato", "en": "Contact" } }
+    ]
+  }
+}
+```
+
+**Usage:** Navigation links use the `id` for scroll anchors and `label` for display text.
+
+---
+
+### Hero Section
+
+Contains landing page content including role, tagline, features, and CTA buttons:
+
+```json src/utils/content.json
+{
+  "hero": {
+    "role": { "ptBR": "...", "en": "..." },
+    "hello": { "ptBR": "Olá, eu sou", "en": "Hi, I'm" },
+    "name": "Thalyson Rafael",
+    "features": [
+      {
+        "id": "end-to-end",
+        "label": { "ptBR": "Do planejamento ao deploy", "en": "From planning to deployment" }
+      }
+    ],
+    "actions": {
+      "portfolio": {
+        "label": { "ptBR": "Ver portfólio", "en": "View portfolio" },
+        "ariaLabel": { "ptBR": "Ver meus projetos em destaque", "en": "View my featured projects" }
+      }
+    }
+  }
+}
+```
+
+**Key fields:**
+- `features`: Array of key value propositions displayed as badges
+- `actions`: CTA buttons with labels and ARIA labels for accessibility
+
+---
+
+### About Section
+
+Defines personal bio, tech stack, differentiation points, work process, and metrics:
+
+```json src/utils/content.json
+{
+  "about": {
+    "title": { "ptBR": "Sobre mim", "en": "About me" },
+    "intro": {
+      "text1": { "ptBR": "...", "en": "..." },
+      "text2": { "ptBR": "...", "en": "..." }
+    },
+    "techStack": [
+      { "title": "TypeScript" },
+      { "title": "Next.js" },
+      { "title": "Nest.js" }
+    ],
+    "differentiation": {
+      "title": { "ptBR": "O que me diferencia:", "en": "What sets me apart:" },
+      "items": [
+        {
+          "title": { "ptBR": "Performance:", "en": "Performance:" },
+          "description": { "ptBR": "...", "en": "..." }
+        }
+      ]
+    },
+    "metrics": [
+      {
+        "value": "5+",
+        "label": { "ptBR": "Projetos end-to-end", "en": "End-to-end projects" }
+      }
+    ]
+  }
+}
+```
+
+<Warning>
+The `techStack` array only includes `title` (no bilingual object) because tech names are universal. Icons are mapped separately in the component via `getIconTech()`.
+</Warning>
+
+---
+
+### Projects Data
+
+Each project entry includes metadata, tech stack, links, and image gallery:
+
+```json src/utils/content.json
+{
+  "projectsData": [
+    {
+      "id": "02",
+      "title": "Equilibrium Center",
+      "projectType": "Fullstack",
+      "category": { "ptBR": "Gestão / Saúde", "en": "Management / Health" },
+      "description": {
+        "ptBR": "Plataforma completa de gestão para massoterapeutas...",
+        "en": "A complete management platform for massage therapists..."
+      },
+      "tech": [
+        "Next.js",
+        "TypeScript",
+        "shadcn",
+        "PostgreSQL (Neon)",
+        "Stripe"
+      ],
+      "links": {
+        "github": "https://github.com/ThalysonRibeiro/equilibrium-center",
+        "githubBackend": "",
+        "app": "",
+        "live": "https://equilibrium-center.vercel.app"
+      },
+      "images": [
+        { "title": "Equilibrium-Center-photo-1", "image": "/eq-center/1.webp" }
+      ]
+    }
+  ]
+}
+```
+
+**Required fields:**
+- `id`: Unique identifier (string)
+- `title`: Project name
+- `description`: Bilingual project description
+- `tech`: Array of technology names
+- `links`: Object with `github`, `githubBackend`, `app`, and `live` URLs (use empty string if not applicable)
+- `images`: Array of image objects with `title` (for alt text) and `image` (public path)
+
+---
+
+### Contact Information
+
+Static contact details and social links:
+
+```json src/utils/content.json
+{
+  "contact": {
+    "static": {
+      "email": "rafinha.head@gmail.com",
+      "phone": "+55 65 98127-8291",
+      "location": "Natal, Rio Grande do Norte, Brasil",
+      "socialLinks": [
+        {
+          "id": "linkedin",
+          "href": "https://www.linkedin.com/in/thalyson-rafael-br",
+          "icon": "FaLinkedinIn",
+          "color": "hover:text-blue-400"
+        }
+      ]
+    },
+    "i18n": {
+      "title": { "ptBR": "Entre em contato", "en": "Get in touch" }
+    }
+  }
+}
+```
+
+**Icon mapping:** The `icon` field references React Icons library. Icons are resolved dynamically in components.
+
+---
+
+### SEO Metadata
+
+Defines Open Graph and Twitter metadata for sharing:
+
+```json src/utils/content.json
+{
+  "metadata": {
+    "siteName": { "ptBR": "Thalyson Rafael", "en": "Thalyson Rafael" },
+    "title": {
+      "ptBR": "Thalyson Rafael | Full-stack Developer & Product Builder",
+      "en": "Thalyson Rafael | Full-stack Developer & Product Builder"
+    },
+    "description": {
+      "ptBR": "Full-stack com Next.js, NestJS e TypeScript. Construo aplicações escaláveis...",
+      "en": "Full-stack with Next.js, NestJS, and TypeScript. I build scalable apps..."
+    }
+  }
+}
+```
+
+**Usage:** Consumed in `src/app/layout.tsx` to generate dynamic metadata for SEO.
+
+---
+
+## Adding New Content
+
+### Add a New Project
+
+<Steps>
+
+<Step title="Add project entry to projectsData array">
+Copy an existing project object and modify all fields:
+
+```json src/utils/content.json
+{
+  "projectsData": [
+    {
+      "id": "06",
+      "title": "My New Project",
+      "projectType": "Fullstack",
+      "category": { "ptBR": "SaaS", "en": "SaaS" },
+      "description": {
+        "ptBR": "Descrição do projeto em português",
+        "en": "Project description in English"
+      },
+      "tech": ["Next.js", "Prisma", "PostgreSQL"],
+      "links": {
+        "github": "https://github.com/username/repo",
+        "githubBackend": "",
+        "app": "",
+        "live": "https://myproject.vercel.app"
+      },
+      "images": [
+        { "title": "Screenshot 1", "image": "/my-project/1.webp" }
+      ]
+    }
+  ]
+}
+```
+</Step>
+
+<Step title="Add project images to public folder">
+Create a folder `public/my-project/` and add your screenshots:
+
+```bash
+public/
+  my-project/
+    1.webp
+    2.webp
+    3.webp
+```
+</Step>
+
+<Step title="Verify the project appears">
+The project will automatically render in the Projects section without any code changes.
+</Step>
+
+</Steps>
+
+---
+
+### Add a New Field to Hero Section
+
+<Steps>
+
+<Step title="Add the field to content.json">
+```json src/utils/content.json
+{
+  "hero": {
+    "subtitle": {
+      "ptBR": "Novo subtítulo",
+      "en": "New subtitle"
+    }
+  }
+}
+```
+</Step>
+
+<Step title="Update the Hero component">
+```tsx src/components/hero.tsx
+import content from "@/utils/content.json";
+import { translate } from "@/utils/i18n";
+
+export function Hero() {
+  const { lang } = useLanguageStore();
+  
+  return (
+    <div>
+      <h1>{translate(content.hero.hello, lang)}</h1>
+      <h2>{translate(content.hero.subtitle, lang)}</h2>
+    </div>
+  );
+}
+```
+</Step>
+
+</Steps>
+
+---
+
+### Add a New Navigation Link
+
+<Steps>
+
+<Step title="Add nav item to header.nav array">
+```json src/utils/content.json
+{
+  "header": {
+    "nav": [
+      { "id": "home", "label": { "ptBR": "Início", "en": "Home" } },
+      { "id": "blog", "label": { "ptBR": "Blog", "en": "Blog" } }
+    ]
+  }
+}
+```
+</Step>
+
+<Step title="Create corresponding section with matching ID">
+```tsx src/app/page.tsx
+<section id="blog">
+  <h2>Blog</h2>
+</section>
+```
+</Step>
+
+</Steps>
+
+<Note>
+The header component automatically maps nav items to smooth-scroll anchors using the `id` field.
+</Note>
+
+---
+
+## Content Validation
+
+### Type Safety
+
+While `content.json` is a plain JSON file, you can create a TypeScript interface for validation:
+
+```typescript src/types/content.ts
+export interface BilingualText {
+  ptBR: string;
+  en: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  projectType: string;
+  category: BilingualText;
+  description: BilingualText;
+  tech: string[];
+  links: {
+    github: string;
+    githubBackend: string;
+    app: string;
+    live: string;
+  };
+  images: Array<{ title: string; image: string }>;
+}
+```
+
+---
+
+### Validation Checklist
+
+Before deploying content changes:
+
+<Accordion title="✅ Pre-deployment Checklist">
+- [ ] All bilingual fields have both `ptBR` and `en` keys
+- [ ] Project IDs are unique
+- [ ] Image paths exist in `public/` folder
+- [ ] External links are valid and use HTTPS
+- [ ] ARIA labels are descriptive for accessibility
+- [ ] No sensitive data (API keys, tokens) in content.json
+- [ ] Tech stack names match exact casing used in icons
+</Accordion>
+
+---
+
+## Best Practices
+
+<Warning>
+**Never hardcode text in components.** Always pull from `content.json` for consistency and maintainability.
+</Warning>
+
+### DO ✅
+
+```tsx
+// Good: Content from JSON
+const { lang } = useLanguageStore();
+<h1>{translate(content.hero.title, lang)}</h1>
+```
+
+### DON'T ❌
+
+```tsx
+// Bad: Hardcoded text
+<h1>Welcome to my portfolio</h1>
+```
+
+---
+
+### Keep Content Organized
+
+Group related content under logical keys:
+
+```json
+{
+  "hero": {
+    "title": {},
+    "subtitle": {},
+    "actions": {}
+  }
+}
+```
+
+---
+
+### Use Descriptive Keys
+
+Prefer semantic keys over generic ones:
+
+```json
+// Good
+{ "actions": { "portfolio": { "label": "View Portfolio" } } }
+
+// Bad
+{ "buttons": { "btn1": { "text": "View Portfolio" } } }
+```
+
+---
+
+### Maintain Consistent Translation Quality
+
+- Use professional tone in both languages
+- Keep translations equivalent in meaning (not literal)
+- Maintain consistent terminology across sections
+
+---
+
+## Translation Helpers
+
+The portfolio uses a simple translation utility:
+
+```typescript src/utils/i18n.ts
+export type Lang = "ptBR" | "en";
+
+export function translate(
+  text: { ptBR: string; en: string },
+  lang: Lang
+): string {
+  return text[lang];
+}
+```
+
+**Usage:**
+
+```tsx
+import { translate } from "@/utils/i18n";
+import { useLanguageStore } from "@/store/language-store";
+
+const { lang } = useLanguageStore();
+const greeting = translate(content.hero.hello, lang);
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+
+<Card title="Styling Components" icon="palette" href="/customization/styling">
+Learn how to customize colors, fonts, and design tokens
+</Card>
+
+<Card title="Animation System" icon="wand-magic-sparkles" href="/customization/animations">
+Explore Framer Motion configuration and animation patterns
+</Card>
+
+</CardGroup>

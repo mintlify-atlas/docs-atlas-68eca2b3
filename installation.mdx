@@ -1,0 +1,590 @@
+---
+title: Installation
+description: Comprehensive installation guide with prerequisites, environment setup, troubleshooting, and verification steps for Thalyson's Portfolio.
+---
+
+## Prerequisites
+
+Before installing the portfolio, ensure your development environment meets these requirements:
+
+### Required Software
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    **Version 20 or later required**
+    
+    Check your version:
+    ```bash
+    node --version
+    ```
+    
+    Download from [nodejs.org](https://nodejs.org/)
+  </Card>
+
+  <Card title="Package Manager" icon="box">
+    **npm, yarn, or pnpm**
+    
+    npm comes with Node.js. Alternatives:
+    - [Yarn](https://yarnpkg.com/): `npm install -g yarn`
+    - [pnpm](https://pnpm.io/): `npm install -g pnpm`
+  </Card>
+
+  <Card title="Git" icon="git-branch">
+    **For cloning the repository**
+    
+    Check installation:
+    ```bash
+    git --version
+    ```
+    
+    Download from [git-scm.com](https://git-scm.com/)
+  </Card>
+
+  <Card title="Code Editor" icon="code">
+    **VS Code recommended**
+    
+    Install from [code.visualstudio.com](https://code.visualstudio.com/)
+    
+    Recommended extensions:
+    - ESLint
+    - Prettier
+    - Tailwind CSS IntelliSense
+  </Card>
+</CardGroup>
+
+### System Requirements
+
+- **Operating System**: Windows 10+, macOS 10.15+, or Linux
+- **RAM**: 4GB minimum, 8GB recommended
+- **Disk Space**: 500MB for dependencies
+- **Browser**: Modern browser (Chrome, Firefox, Safari, Edge)
+
+## Detailed Installation Steps
+
+<Steps>
+  <Step title="Verify Prerequisites">
+    Before starting, verify all prerequisites are installed:
+
+    ```bash
+    # Check Node.js version (should be 20+)
+    node --version
+
+    # Check npm version
+    npm --version
+
+    # Check Git installation
+    git --version
+    ```
+
+    <Warning>
+    If Node.js version is below 20, you'll need to upgrade. The portfolio uses features that require Node.js 20 or later.
+    </Warning>
+  </Step>
+
+  <Step title="Clone the Repository">
+    Clone the portfolio repository from GitHub:
+
+    ```bash
+    # Clone via HTTPS
+    git clone https://github.com/ThalysonRibeiro/my-portfolio-fullstack.git
+
+    # Or clone via SSH (if you have SSH keys set up)
+    git clone git@github.com:ThalysonRibeiro/my-portfolio-fullstack.git
+
+    # Navigate into the project directory
+    cd my-portfolio-fullstack
+    ```
+
+    <Tip>
+    **Creating Your Own Version?** Fork the repository on GitHub first, then clone your fork:
+    
+    ```bash
+    git clone https://github.com/YOUR-USERNAME/my-portfolio-fullstack.git
+    ```
+    </Tip>
+  </Step>
+
+  <Step title="Install Dependencies">
+    Install all required packages. Choose your preferred package manager:
+
+    <CodeGroup>
+    ```bash npm
+    # Install with npm
+    npm install
+
+    # Alternative: Clean install (recommended for production)
+    npm ci
+    ```
+
+    ```bash yarn
+    # Install with Yarn
+    yarn install
+
+    # Alternative: Frozen lockfile (CI/CD)
+    yarn install --frozen-lockfile
+    ```
+
+    ```bash pnpm
+    # Install with pnpm (fastest)
+    pnpm install
+
+    # Alternative: Frozen lockfile
+    pnpm install --frozen-lockfile
+    ```
+    </CodeGroup>
+
+    This installs all dependencies from `package.json`:
+
+    **Core Dependencies:**
+    - `next@^16.1.5` - Next.js framework
+    - `react@^19.2.3` - React library
+    - `react-dom@^19.2.3` - React DOM
+    - `typescript@^5` - TypeScript
+
+    **UI & Styling:**
+    - `tailwindcss@^4` - Tailwind CSS
+    - `@radix-ui/*` - UI component primitives
+    - `framer-motion@^12.17.0` - Animations
+    - `lucide-react@^0.514.0` - Icons
+
+    **Forms & Validation:**
+    - `react-hook-form@^7.57.0` - Form handling
+    - `zod@^3.25.58` - Schema validation
+    - `@hookform/resolvers@^5.1.1` - Form resolvers
+
+    **State & Utilities:**
+    - `zustand@^5.0.11` - State management
+    - `sonner@^2.0.5` - Toast notifications
+    - `clsx@^2.1.1` - Class utilities
+
+    <Note>
+    Installation time varies by package manager:
+    - **npm**: 2-4 minutes
+    - **yarn**: 1-3 minutes  
+    - **pnpm**: 30 seconds - 2 minutes (uses shared cache)
+    </Note>
+  </Step>
+
+  <Step title="Environment Configuration">
+    The portfolio uses environment variables for configuration. While the portfolio can run without environment variables, some features require them:
+
+    **Optional Environment Variables:**
+
+    Create a `.env.local` file in the project root:
+
+    ```bash
+    # Create environment file
+    touch .env.local
+    ```
+
+    Add the following variables (all optional):
+
+    ```bash
+    # Site URL (for SEO and metadata)
+    NEXT_PUBLIC_URL=http://localhost:3000
+
+    # Google Analytics (optional - for analytics tracking)
+    NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+
+    # Bundle Analyzer (optional - set to 'true' to analyze bundle)
+    ANALYZE=false
+    ```
+
+    <Note>
+    **For Production**: Replace `http://localhost:3000` with your actual domain when deploying.
+    </Note>
+
+    ### Environment Variable Details
+
+    **`NEXT_PUBLIC_URL`**
+    - Used in metadata and OpenGraph tags
+    - Default: `http://localhost:3000` (from `layout.tsx:21`)
+    - Set this to your production URL when deploying
+
+    **`NEXT_PUBLIC_GA_ID`**
+    - Google Analytics measurement ID
+    - Optional: Only needed if using Google Analytics
+    - Format: `G-XXXXXXXXXX`
+
+    **`ANALYZE`**
+    - Bundle analyzer configuration (from `next.config.ts:4`)
+    - Set to `true` to analyze bundle size
+    - Run build to see analyzer: `ANALYZE=true npm run build`
+
+    <Warning>
+    Never commit `.env.local` to version control. It's already in `.gitignore` by default.
+    </Warning>
+  </Step>
+
+  <Step title="Verify Installation">
+    Verify everything is set up correctly before starting development:
+
+    ```bash
+    # Check if all dependencies are installed
+    npm list --depth=0
+
+    # Verify TypeScript configuration
+    npx tsc --noEmit
+
+    # Run linter to check for issues
+    npm run lint
+    ```
+
+    All commands should complete without errors.
+  </Step>
+
+  <Step title="Start Development Server">
+    Launch the development server with Turbopack:
+
+    <CodeGroup>
+    ```bash npm
+    npm run dev
+    ```
+
+    ```bash yarn
+    yarn dev
+    ```
+
+    ```bash pnpm
+    pnpm dev
+    ```
+    </CodeGroup>
+
+    You should see:
+
+    ```
+    ▲ Next.js 16.1.5
+    - Local:        http://localhost:3000
+    - Turbopack:    enabled
+
+    ✓ Starting...
+    ✓ Ready in 1.2s
+    ```
+
+    <Tip>
+    The portfolio uses Turbopack by default (`--turbopack` flag in `package.json:6`) for faster development experience.
+    </Tip>
+  </Step>
+</Steps>
+
+## Troubleshooting Installation Issues
+
+### Common Issues and Solutions
+
+<AccordionGroup>
+  <Accordion title="Node.js Version Mismatch">
+    **Error**: `error: The engine "node" is incompatible with this module`
+
+    **Solution**: Upgrade Node.js to version 20 or later.
+
+    ```bash
+    # Check current version
+    node --version
+
+    # Upgrade using nvm (recommended)
+    nvm install 20
+    nvm use 20
+
+    # Or download from nodejs.org
+    ```
+
+    <Note>
+    Consider using [nvm](https://github.com/nvm-sh/nvm) (Node Version Manager) to manage multiple Node.js versions.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Permission Errors During Installation">
+    **Error**: `EACCES: permission denied` or `EPERM: operation not permitted`
+
+    **Solution**: Fix npm permissions (avoid using sudo):
+
+    ```bash
+    # Configure npm to use a different directory
+    mkdir ~/.npm-global
+    npm config set prefix '~/.npm-global'
+
+    # Add to PATH in your shell profile (~/.bashrc, ~/.zshrc, etc.)
+    export PATH=~/.npm-global/bin:$PATH
+
+    # Reload shell configuration
+    source ~/.bashrc  # or ~/.zshrc
+    ```
+
+    **Windows**: Run terminal as Administrator or check Windows Defender settings.
+  </Accordion>
+
+  <Accordion title="Dependency Installation Fails">
+    **Error**: Various npm/yarn errors during installation
+
+    **Solution**: Clear cache and reinstall:
+
+    <CodeGroup>
+    ```bash npm
+    # Clear npm cache
+    npm cache clean --force
+
+    # Remove existing modules
+    rm -rf node_modules package-lock.json
+
+    # Reinstall
+    npm install
+    ```
+
+    ```bash yarn
+    # Clear yarn cache
+    yarn cache clean
+
+    # Remove existing modules
+    rm -rf node_modules yarn.lock
+
+    # Reinstall
+    yarn install
+    ```
+
+    ```bash pnpm
+    # Clear pnpm cache
+    pnpm store prune
+
+    # Remove existing modules
+    rm -rf node_modules pnpm-lock.yaml
+
+    # Reinstall
+    pnpm install
+    ```
+    </CodeGroup>
+  </Accordion>
+
+  <Accordion title="Port 3000 Already in Use">
+    **Error**: `Error: listen EADDRINUSE: address already in use :::3000`
+
+    **Solution**: Use a different port or stop the process using port 3000:
+
+    ```bash
+    # Use different port
+    PORT=3001 npm run dev
+
+    # Or kill process on port 3000 (macOS/Linux)
+    lsof -ti:3000 | xargs kill -9
+
+    # Windows
+    netstat -ano | findstr :3000
+    taskkill /PID <PID> /F
+    ```
+  </Accordion>
+
+  <Accordion title="Module Not Found Errors">
+    **Error**: `Error: Cannot find module 'xyz'` or `Module not found: Can't resolve 'xyz'`
+
+    **Solution**: Ensure all dependencies are installed and TypeScript paths are configured:
+
+    ```bash
+    # Reinstall dependencies
+    npm install
+
+    # Check TypeScript configuration
+    cat tsconfig.json | grep paths
+
+    # Should show: "@/*": ["./src/*"]
+
+    # Clear Next.js cache
+    rm -rf .next
+
+    # Restart dev server
+    npm run dev
+    ```
+  </Accordion>
+
+  <Accordion title="TypeScript Errors">
+    **Error**: Various TypeScript compilation errors
+
+    **Solution**: Verify TypeScript configuration and dependencies:
+
+    ```bash
+    # Check TypeScript version (should be 5.x)
+    npx tsc --version
+
+    # Verify configuration
+    npx tsc --showConfig
+
+    # Check for type errors without emitting
+    npx tsc --noEmit
+
+    # Install missing type definitions
+    npm install --save-dev @types/node @types/react @types/react-dom
+    ```
+  </Accordion>
+
+  <Accordion title="Turbopack Issues">
+    **Error**: Issues with Turbopack or slow compilation
+
+    **Solution**: Disable Turbopack temporarily:
+
+    ```json
+    // In package.json, change:
+    "dev": "next dev --turbopack",
+    // to:
+    "dev": "next dev",
+    ```
+
+    Or run directly:
+    ```bash
+    npx next dev
+    ```
+
+    <Note>
+    Report Turbopack issues to the Next.js team as it's still in active development.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Build Failures">
+    **Error**: Production build fails with various errors
+
+    **Solution**: Identify and fix build-time issues:
+
+    ```bash
+    # Run build in verbose mode
+    npm run build -- --debug
+
+    # Check for ESLint errors
+    npm run lint
+
+    # Type check
+    npx tsc --noEmit
+
+    # Clear all caches
+    rm -rf .next node_modules package-lock.json
+    npm install
+    npm run build
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Verification Steps
+
+After installation, verify everything works correctly:
+
+<Steps>
+  <Step title="Visual Verification">
+    Open `http://localhost:3000` in your browser and verify:
+
+    - ✅ Page loads without errors
+    - ✅ Hero section displays with animations
+    - ✅ Navigation menu works
+    - ✅ Images load correctly (may show placeholder if Cloudinary isn't configured)
+    - ✅ Smooth scrolling between sections
+    - ✅ Contact form renders properly
+    - ✅ Footer displays correctly
+  </Step>
+
+  <Step title="Console Verification">
+    Open browser DevTools (F12) and check:
+
+    - ✅ No red errors in Console tab
+    - ✅ No 404 errors in Network tab
+    - ✅ No hydration warnings
+    - ✅ React DevTools shows component tree (install React DevTools extension)
+  </Step>
+
+  <Step title="Hot Reload Test">
+    Test that hot reload works:
+
+    1. Open `src/app/page.tsx` in your editor
+    2. Make a visible change (e.g., change some text)
+    3. Save the file
+    4. Browser should update automatically without refresh
+    
+    <Note>
+    Changes should appear in under 1 second with Turbopack enabled.
+    </Note>
+  </Step>
+
+  <Step title="Build Verification">
+    Verify production build works:
+
+    ```bash
+    # Create production build
+    npm run build
+
+    # Should complete without errors and show:
+    # ✓ Compiled successfully
+    # ✓ Collecting page data
+    # ✓ Generating static pages
+    # ✓ Finalizing page optimization
+
+    # Test production build locally
+    npm start
+    ```
+
+    Visit `http://localhost:3000` to test the production build.
+  </Step>
+</Steps>
+
+## Post-Installation Configuration
+
+### Recommended VS Code Extensions
+
+Install these extensions for the best development experience:
+
+```json
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "dsznajder.es7-react-js-snippets"
+  ]
+}
+```
+
+### Configure Prettier (Optional)
+
+The project includes Prettier configuration (`.prettierrc`). Configure your editor to format on save:
+
+```json
+// In VS Code settings.json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode"
+}
+```
+
+### Configure ESLint (Optional)
+
+ESLint configuration is in `eslint.config.mjs`. It's already set up with Next.js and Prettier rules.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Return to the Quick Start guide for a streamlined workflow
+  </Card>
+  <Card title="Project Structure" icon="folder-tree" href="/development/project-structure">
+    Learn about the codebase organization
+  </Card>
+  <Card title="Customization" icon="palette" href="/customization/content-management">
+    Start customizing the portfolio for your needs
+  </Card>
+  <Card title="Deployment" icon="cloud-upload" href="/development/deployment-guide">
+    Deploy your portfolio to production
+  </Card>
+</CardGroup>
+
+## Getting Additional Help
+
+If you're still experiencing issues:
+
+1. **Check Documentation**: Review relevant sections in this documentation
+2. **Next.js Docs**: Visit [nextjs.org/docs](https://nextjs.org/docs) for framework-specific issues
+3. **GitHub Issues**: Check [existing issues](https://github.com/ThalysonRibeiro/my-portfolio-fullstack/issues) or create a new one
+4. **Community Support**: Ask in Next.js Discord or React communities
+5. **Dependency Issues**: Check individual package documentation for specific errors
+
+<Tip>
+When seeking help, include:
+- Your Node.js version (`node --version`)
+- Your package manager and version
+- Full error messages
+- Steps to reproduce the issue
+</Tip>

@@ -1,0 +1,409 @@
+---
+title: 'Building for Production'
+description: 'Learn how to build and optimize Thalyson''s Portfolio for production deployment'
+---
+
+## Build Process Overview
+
+Thalyson's Portfolio uses Next.js with TypeScript and is optimized for production builds with advanced features like Turbopack in development and comprehensive bundle analysis.
+
+<Note>
+  The project uses Next.js 16+ which includes significant performance improvements and React 19 support.
+</Note>
+
+## Build Scripts
+
+The following npm scripts are available in `package.json:5-11`:
+
+<CodeGroup>
+```bash Development
+npm run dev
+# Starts development server with Turbopack
+```
+
+```bash Production Build
+npm run build
+# Creates optimized production build
+```
+
+```bash Production Server
+npm start
+# Runs the production build locally
+```
+
+```bash Linting
+npm run lint
+# Runs ESLint to check code quality
+```
+
+```bash Formatting
+npm run format
+# Formats code with Prettier
+```
+</CodeGroup>
+
+## Next.js Build Configuration
+
+The build configuration is defined in `next.config.ts:1-20`:
+
+```typescript
+import type { NextConfig } from "next";
+
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
+
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com"
+      }
+    ]
+  }
+};
+
+export default withBundleAnalyzer(nextConfig);
+```
+
+### Key Configuration Features
+
+<Accordion title="Image Optimization">
+  The project configures remote image patterns for Cloudinary, enabling Next.js Image optimization for external images:
+  
+  - **Protocol**: HTTPS only for security
+  - **Hostname**: `res.cloudinary.com` for CDN-hosted images
+  - Automatic image optimization, resizing, and WebP/AVIF conversion
+</Accordion>
+
+<Accordion title="Bundle Analyzer">
+  The `@next/bundle-analyzer` package is integrated to analyze bundle sizes:
+  
+  ```bash
+  ANALYZE=true npm run build
+  ```
+  
+  This generates an interactive visualization of your bundle composition, helping identify optimization opportunities.
+</Accordion>
+
+## Production Optimizations
+
+Next.js automatically applies several production optimizations during the build process:
+
+<Steps>
+  <Step title="Code Minification">
+    JavaScript and CSS are automatically minified using SWC, Next.js's Rust-based compiler.
+  </Step>
+  
+  <Step title="Tree Shaking">
+    Unused code is eliminated from the final bundle, reducing bundle size.
+  </Step>
+  
+  <Step title="Static Generation">
+    Pages are pre-rendered at build time when possible for optimal performance.
+  </Step>
+  
+  <Step title="Image Optimization">
+    Images are optimized on-demand with automatic format selection (WebP/AVIF).
+  </Step>
+</Steps>
+
+## Turbopack: Development vs Production
+
+### Development Mode
+
+The project uses Turbopack in development (`package.json:6`):
+
+```bash
+npm run dev
+# Runs: next dev --turbopack
+```
+
+<Tip>
+  Turbopack provides significantly faster hot module replacement (HMR) and initial compilation compared to Webpack, making development more efficient.
+</Tip>
+
+**Turbopack Benefits:**
+- Up to 700x faster updates than Webpack
+- Incremental compilation
+- Built-in Rust-based bundler
+- Faster cold starts
+
+### Production Build
+
+Production builds use Next.js's optimized build system:
+
+```bash
+npm run build
+```
+
+This creates a `.next` directory with:
+- Optimized JavaScript bundles
+- Static HTML pages
+- Server-side rendering functions
+- Build manifest and metadata
+
+## Build Output Analysis
+
+After running `npm run build`, you'll see output like:
+
+```bash
+Route (app)                              Size     First Load JS
+┌ ○ /                                    5.2 kB         95.3 kB
+├ ○ /_not-found                          871 B          85.1 kB
+└ ○ /about                               3.1 kB         93.2 kB
+
+○  (Static)  prerendered as static content
+```
+
+### Understanding the Output
+
+<Accordion title="Route Indicators">
+  - **○ (Static)**: Page is pre-rendered at build time
+  - **λ (Server)**: Server-rendered on each request
+  - **◐ (ISR)**: Incremental Static Regeneration
+  - **◯ (SSG)**: Static Site Generation with dynamic paths
+</Accordion>
+
+<Accordion title="Size Metrics">
+  - **Size**: Individual page JavaScript size
+  - **First Load JS**: Total JavaScript loaded on initial page visit
+  
+  <Warning>
+    Keep First Load JS under 200 kB for optimal performance. Pages over this threshold may experience slower initial loads.
+  </Warning>
+</Accordion>
+
+## Bundle Size Optimization
+
+### Analyze Your Bundle
+
+<Steps>
+  <Step title="Run Bundle Analyzer">
+    ```bash
+    ANALYZE=true npm run build
+    ```
+    
+    This opens an interactive treemap visualization in your browser.
+  </Step>
+  
+  <Step title="Identify Large Dependencies">
+    Look for unexpectedly large packages or duplicate dependencies.
+  </Step>
+  
+  <Step title="Optimize Imports">
+    Use tree-shakeable imports:
+    
+    ```typescript
+    // Good: Tree-shakeable
+    import { Button } from 'lucide-react'
+    
+    // Avoid: Imports entire library
+    import * as Icons from 'lucide-react'
+    ```
+  </Step>
+</Steps>
+
+### Optimization Strategies
+
+<CodeGroup>
+```typescript Dynamic Imports
+// Lazy load heavy components
+import dynamic from 'next/dynamic'
+
+const HeavyComponent = dynamic(() => import('@/components/HeavyComponent'), {
+  loading: () => <p>Loading...</p>,
+  ssr: false // Disable SSR if not needed
+})
+```
+
+```typescript Code Splitting
+// Route-based code splitting (automatic)
+export default function Page() {
+  return <div>Each route is automatically split</div>
+}
+```
+
+```typescript Optimize Dependencies
+// In next.config.ts
+const nextConfig = {
+  // Transpile specific packages if needed
+  transpilePackages: ['package-name'],
+  
+  // Optimize package imports
+  modularizeImports: {
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{member}}'
+    }
+  }
+}
+```
+</CodeGroup>
+
+## Image Optimization Best Practices
+
+The project uses Next.js Image component with Cloudinary integration:
+
+```tsx
+import Image from 'next/image'
+
+export default function Hero() {
+  return (
+    <Image
+      src="https://res.cloudinary.com/your-cloud/image.jpg"
+      alt="Description"
+      width={800}
+      height={600}
+      priority // For above-the-fold images
+      placeholder="blur" // Optional blur placeholder
+    />
+  )
+}
+```
+
+<Tip>
+  **Image Optimization Tips:**
+  - Use `priority` for above-the-fold images
+  - Specify exact `width` and `height` to prevent layout shift
+  - Use `loading="lazy"` for below-the-fold images (default)
+  - Next.js automatically serves WebP/AVIF when supported
+</Tip>
+
+## Code Splitting and Lazy Loading
+
+### Automatic Code Splitting
+
+Next.js automatically splits code at the route level. Each page only loads the JavaScript it needs.
+
+### Manual Code Splitting
+
+<CodeGroup>
+```typescript Component-Level
+import dynamic from 'next/dynamic'
+
+// Lazy load a component
+const ContactForm = dynamic(() => import('@/components/ContactForm'), {
+  loading: () => <Skeleton />,
+  ssr: true // Enable/disable server rendering
+})
+```
+
+```typescript Conditional Loading
+import dynamic from 'next/dynamic'
+
+// Load component only on client side
+const Chart = dynamic(() => import('@/components/Chart'), {
+  ssr: false // Client-side only
+})
+```
+
+```typescript Named Exports
+import dynamic from 'next/dynamic'
+
+// Import named export
+const Analytics = dynamic(
+  () => import('@/components/Dashboard').then(mod => mod.Analytics)
+)
+```
+</CodeGroup>
+
+## Build Troubleshooting
+
+### Common Build Errors
+
+<Accordion title="Type Errors">
+  **Problem**: TypeScript compilation errors during build
+  
+  ```bash
+  npm run lint
+  # Check for type errors
+  
+  npx tsc --noEmit
+  # Type check without emitting files
+  ```
+  
+  **Solution**: Fix type errors in your code or update `tsconfig.json:7` to be less strict temporarily.
+</Accordion>
+
+<Accordion title="Module Not Found">
+  **Problem**: Cannot find module or dependency
+  
+  ```bash
+  rm -rf node_modules package-lock.json
+  npm install
+  npm run build
+  ```
+  
+  **Solution**: Clear node_modules and reinstall dependencies.
+</Accordion>
+
+<Accordion title="Out of Memory">
+  **Problem**: JavaScript heap out of memory
+  
+  ```bash
+  # Increase Node.js memory limit
+  NODE_OPTIONS="--max-old-space-size=4096" npm run build
+  ```
+  
+  **Solution**: Increase memory allocation or optimize your code to reduce memory usage.
+</Accordion>
+
+<Accordion title="Image Optimization Errors">
+  **Problem**: Failed to optimize images
+  
+  **Solution**: Ensure image URLs in `next.config.ts:9-16` match your actual image sources. Verify remote patterns are correctly configured.
+</Accordion>
+
+<Accordion title="Environment Variables">
+  **Problem**: Environment variables undefined in production
+  
+  ```typescript
+  // Only variables prefixed with NEXT_PUBLIC_ are available in browser
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY
+  ```
+  
+  <Warning>
+    Server-side environment variables (without `NEXT_PUBLIC_` prefix) are only available in server components and API routes.
+  </Warning>
+</Accordion>
+
+### Build Performance Tips
+
+<Steps>
+  <Step title="Use SWC Compiler">
+    Next.js uses SWC by default (faster than Babel). Avoid custom Babel configuration unless necessary.
+  </Step>
+  
+  <Step title="Enable Incremental Builds">
+    TypeScript incremental compilation is enabled in `tsconfig.json:15`. This speeds up subsequent builds.
+  </Step>
+  
+  <Step title="Optimize Dependencies">
+    Review and remove unused dependencies:
+    ```bash
+    npm uninstall unused-package
+    ```
+  </Step>
+  
+  <Step title="Cache Build Output">
+    CI/CD systems should cache `.next/cache` directory between builds.
+  </Step>
+</Steps>
+
+## Pre-Build Checklist
+
+Before building for production, ensure:
+
+- [ ] All TypeScript errors are resolved (`npm run lint`)
+- [ ] Code is formatted (`npm run format`)
+- [ ] Environment variables are configured
+- [ ] Image sources are properly configured in `next.config.ts`
+- [ ] Dependencies are up to date and secure
+- [ ] Build completes without errors (`npm run build`)
+- [ ] Production build runs locally (`npm run build && npm start`)
+- [ ] Bundle sizes are acceptable (`ANALYZE=true npm run build`)
+
+<Note>
+  After a successful build, test the production build locally with `npm start` before deploying to catch any issues early.
+</Note>
