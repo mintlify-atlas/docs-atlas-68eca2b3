@@ -1,0 +1,110 @@
+{
+  "projectType": "frontend",
+  "projectName": "Thalyson's Portfolio",
+  "projectDescription": "A modern, interactive full-stack portfolio showcasing development skills with Next.js, React, and TypeScript",
+  "theme": "palm",
+  "primaryColor": "#7c7c7c",
+  "lightColor": "#080808",
+  "darkColor": "#dbdbdb",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/hero-section",
+              "features/projects-showcase",
+              "features/about-section",
+              "features/contact-form",
+              "features/internationalization"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "components/overview",
+              "components/ui-components",
+              "components/animated-background",
+              "components/github-stats"
+            ]
+          },
+          {
+            "group": "Customization",
+            "pages": [
+              "customization/content-management",
+              "customization/styling",
+              "customization/animations"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "development/project-structure",
+              "development/tech-stack",
+              "development/state-management"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "development/environment-setup",
+              "development/analytics",
+              "development/seo-optimization"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "development/building",
+              "development/deployment-guide"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Next.js 16 with App Router and Turbopack",
+    "React 19 with TypeScript",
+    "Tailwind CSS 4 for styling",
+    "Framer Motion animations",
+    "Radix UI accessible components",
+    "Internationalization (PT-BR/EN)",
+    "GitHub stats integration",
+    "Contact form with validation",
+    "SEO optimization",
+    "Google Analytics integration",
+    "Cookie consent management",
+    "Responsive design",
+    "Dynamic content management"
+  ],
+  "publicApiSurface": [
+    "Hero component",
+    "Projects component",
+    "About component",
+    "Contact component",
+    "NavigationHeader component",
+    "Squares animated background",
+    "GitHubStats component",
+    "TechnicalDecisions component",
+    "UI components (Button, Card, Badge, Dialog, Form, Input, Select, etc.)",
+    "useLanguageStore (Zustand store)",
+    "content.json (content management)",
+    "GitHub API route"
+  ]
+}
